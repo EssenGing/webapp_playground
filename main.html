@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>がんばれ！モンスター討伐隊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: manipulation;
+        }
+        .btn-3d {
+            transition: all 0.1s ease-out;
+            box-shadow: 0 6px 0 #a3a3a3;
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a3a3a3;
+        }
+        .btn-3d:disabled {
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 #9ca3af;
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+        @keyframes spawn {
+            0% { transform: scale(0.5) translateY(50px); opacity: 0; }
+            70% { transform: scale(1.1) translateY(0); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-spawn { animation: spawn 0.5s ease-out forwards; }
+        @keyframes defeat {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.2) rotate(15deg); opacity: 0.5; }
+            100% { transform: scale(0.1) rotate(-360deg); opacity: 0; }
+        }
+        .animate-defeat { animation: defeat 0.6s ease-in forwards; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+        @keyframes celebrate-text {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-celebrate { animation: celebrate-text 1s ease-in-out infinite; }
+        @keyframes gameover-text {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(-2deg); }
+            75% { transform: scale(1.05) rotate(2deg); }
+        }
+        .animate-gameover { animation: gameover-text 0.5s ease-in-out; }
+        .touch-none {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-yellow-50 text-gray-800 flex items-center justify-center min-h-screen">
+    <div id="app-container" class="w-full max-w-5xl mx-auto p-4 text-center">
+
+        <!-- デッキ選択画面 -->
+        <div id="deck-selection-screen" class="space-y-6">
+            <h1 class="text-5xl font-extrabold text-amber-600">がんばれ！<br>モンスター討伐隊</h1>
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-3xl font-bold mb-6">どのデッキでたたかう？</h2>
+                <div id="deck-list" class="space-y-4 mb-6 max-h-80 overflow-y-auto"></div>
+                <button id="new-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 w-full rounded-lg text-2xl btn-3d">+ あたらしいデッキをつくる</button>
+            </div>
+        </div>
+
+        <!-- デッキ編集画面 -->
+        <div id="deck-editor-screen" class="hidden space-y-4">
+            <h2 class="text-4xl font-bold text-amber-600">デッキのへんしゅう</h2>
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-left">
+                <div class="mb-6">
+                    <label for="deck-name" class="font-bold text-xl">デッキのなまえ</label>
+                    <input type="text" id="deck-name" class="w-full text-xl p-3 border rounded mt-2" placeholder="例：かんじテスト">
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-xl">もんだいリスト</h3>
+                </div>
+                <div id="questions-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto p-4 bg-gray-50 rounded min-h-[100px]"></div>
+                <div class="border-t pt-6">
+                    <h3 class="font-bold text-xl mb-4">あたらしいもんだい</h3>
+                    <div class="mb-4">
+                         <label for="new-question" class="text-lg">もんだい</label>
+                         <textarea id="new-question" rows="2" class="w-full p-3 border rounded mt-1 text-lg" placeholder="例：日本の首都は？"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="new-answer" class="text-lg">こたえ</label>
+                        <input type="text" id="new-answer" class="w-full p-3 border rounded mt-1 text-lg" placeholder="例：東京">
+                    </div>
+                    <button id="add-question-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg btn-3d text-xl">もんだいをついか</button>
+                </div>
+            </div>
+             <div class="grid grid-cols-2 gap-6 mt-6">
+                 <button id="save-deck-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-lg text-2xl btn-3d">このデッキをほぞん</button>
+                 <button id="back-to-selection-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 rounded-lg text-2xl btn-3d">もどる</button>
+            </div>
+        </div>
+
+        <!-- 問題数選択画面 -->
+        <div id="setup-screen" class="hidden space-y-6">
+            <h1 id="setup-title" class="text-4xl font-extrabold text-amber-600"></h1>
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-3xl font-bold mb-6">なんびき とうばつする？</h2>
+                <div id="question-count-buttons" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                 <button id="back-to-decks-btn" class="mt-6 w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 rounded-lg text-2xl btn-3d">デッキをえらびなおす</button>
+            </div>
+        </div>
+
+        <!-- メイン画面 -->
+        <div id="main-screen" class="hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-lg relative">
+                 <div id="game-buttons" class="absolute top-6 right-6 flex flex-col space-y-4">
+                    <button id="correct-btn" class="bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 px-6 rounded-xl text-2xl btn-3d">せいかい！</button>
+                    <button id="retry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-4 px-6 rounded-xl text-2xl btn-3d">解き直し</button>
+                </div>
+                <div class="flex justify-between items-center mb-4 pr-48">
+                    <h2 id="monster-title" class="text-3xl font-bold text-amber-600"></h2>
+                    <p id="counter" class="text-2xl font-bold bg-gray-200 px-6 py-2 rounded-full"></p>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-5 mb-4">
+                    <div id="timer-bar" class="bg-gradient-to-r from-yellow-400 to-red-500 h-5 rounded-full" style="width: 100%; transition: width 1s linear;"></div>
+                </div>
+
+                <div id="lives-area" class="flex justify-center gap-3 text-4xl mb-4"></div>
+                <div class="bg-gray-100 p-6 rounded-lg my-6 min-h-[150px] flex flex-col justify-center">
+                    <div id="question-display" class="text-4xl font-bold mb-2"></div>
+                </div>
+
+                <div id="monster-area" class="h-48 flex items-center justify-center"></div>
+
+                <div class="my-6">
+                    <label class="font-bold text-left block mb-3 text-gray-600 text-xl">こたえをかいてみよう！</label>
+                    <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-64 cursor-crosshair touch-none"></canvas>
+                    <button id="clear-canvas-btn" class="mt-4 w-1/3 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg btn-3d text-xl">けす</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- クリア画面 -->
+        <div id="clear-screen" class="hidden">
+            <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+            <div class="bg-white p-12 rounded-2xl shadow-2xl space-y-6">
+                <h1 class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-celebrate">ぜんぶ やっつけた！<br>おめでとう！</h1>
+                <p class="text-9xl">🏆✨🎉</p>
+                <div id="clear-results-area" class="text-left max-h-60 overflow-y-auto bg-gray-50 p-6 rounded-lg border"></div>
+                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-10 rounded-lg text-3xl btn-3d">もういっかい</button>
+            </div>
+        </div>
+
+        <!-- ゲームオーバー画面 -->
+        <div id="gameover-screen" class="hidden">
+            <div class="bg-gray-800 p-12 rounded-2xl shadow-2xl space-y-6 text-white">
+                <h1 class="text-6xl font-extrabold text-red-500 animate-gameover">ゲームオーバー</h1>
+                <p class="text-9xl">😭</p>
+                <p class="text-2xl">ざんねん…<br>またちょうせんしてね！</p>
+                <div id="gameover-results-area" class="text-left max-h-60 overflow-y-auto bg-gray-700 p-6 rounded-lg border border-gray-600"></div>
+                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 font-bold py-5 px-10 rounded-lg text-3xl btn-3d">もういっかい</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM要素 ---
+        const screens = {
+            deckSelection: document.getElementById('deck-selection-screen'),
+            deckEditor: document.getElementById('deck-editor-screen'),
+            setup: document.getElementById('setup-screen'),
+            main: document.getElementById('main-screen'),
+            clear: document.getElementById('clear-screen'),
+            gameover: document.getElementById('gameover-screen'),
+        };
+        const deckList = document.getElementById('deck-list');
+        const newDeckBtn = document.getElementById('new-deck-btn');
+        const deckEditorIndex = document.getElementById('deck-editor-index');
+        const deckNameInput = document.getElementById('deck-name');
+        const questionsList = document.getElementById('questions-list');
+        const newQuestionInput = document.getElementById('new-question');
+        const newAnswerInput = document.getElementById('new-answer');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const saveDeckBtn = document.getElementById('save-deck-btn');
+        const backToSelectionBtn = document.getElementById('back-to-selection-btn');
+        const setupTitle = document.getElementById('setup-title');
+        const questionCountButtons = document.getElementById('question-count-buttons');
+        const backToDecksBtn = document.getElementById('back-to-decks-btn');
+        const monsterTitle = document.getElementById('monster-title');
+        const counter = document.getElementById('counter');
+        const livesArea = document.getElementById('lives-area');
+        const questionDisplay = document.getElementById('question-display');
+        const monsterArea = document.getElementById('monster-area');
+        const correctBtn = document.getElementById('correct-btn');
+        const retryBtn = document.getElementById('retry-btn');
+        const handwritingCanvas = document.getElementById('handwriting-canvas');
+        const clearCanvasBtn = document.getElementById('clear-canvas-btn');
+        const timerBar = document.getElementById('timer-bar');
+
+        // --- ゲーム状態 ---
+        let decks = [];
+        let currentDeckIndex = -1;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let totalMonsters = 0;
+        let defeatedMonsters = 0;
+        let mistakes = 0;
+        const MAX_MISTAKES = 3;
+        let buttonsDisabled = false;
+        let questionTimer = null;
+        const TIME_LIMIT = 15;
+
+        // --- モンスター ---
+        const MONSTERS = [
+            { name: 'サイバイマン', image: 'https://img.atwiki.jp/dragonuteningyougeki/attach/58/58/%E3%82%B5%E3%82%A4%E3%83%90%E3%82%A4%E3%83%9E%E3%83%B3.png', emoji: '🌱' },
+            { name: 'ラディッツ', image: 'https://dragon-ball-official.com/dragonball/jp/news/2021/09/chara21_1.jpg?_=1755538260', emoji: '👨‍' },
+            { name: 'ナッパ', image: 'https://dba.bn-ent.net/character/images/nappa/portrait.png', emoji: '💪' },
+            { name: 'ベジータ', image: 'https://dba.bn-ent.net/character/images/vegeta/portrait.png', emoji: '👑' },
+            { name: 'ギニュー特戦隊', image: 'https://lineup.toei-anim.co.jp/upload/save_image/episode/6168/story_img_1.jpg', emoji: '🕺' },
+            { name: 'フリーザ第一形態', image: 'https://dragon-ball-official.com/dragonball/jp/news/2021/10/chara23_1.jpg?_=1756504020', emoji: '👹' },
+            // { name: 'フリーザ最終形態', image: 'https://i.imgur.com/placeholder7.png', emoji: '�' },
+            // { name: 'セル第一形態', image: 'https://avatars.dicebear.com/api/bottts/cell1.svg', emoji: '🦂' },
+            // { name: 'セル完全体', image: 'https://i.imgur.com/placeholder9.png', emoji: '�' },
+            // { name: '魔人ブウ', image: 'https://avatars.dicebear.com/api/bottts/majin-buu.svg', emoji: '🍭' },
+            // { name: 'ブロリー', image: 'https://i.imgur.com/placeholder11.png', emoji: '�' },
+            // { name: 'ジャネンバ', image: 'https://i.imgur.com/placeholder12.png', emoji: '�' }
+        ];
+        const BOSS_MONSTER = { name: '神龍（シェンロン）', image: 'https://cdn.ibispaint.com/movie/277/351/277351048/image277351048.png', emoji: '🐉' };
+
+
+        // --- Canvas State ---
+        let canvasCtx;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // --- 画面切り替え ---
+        function showScreen(screenId) {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[screenId].classList.remove('hidden');
+        }
+
+        // --- デッキ管理 ---
+        function loadDecks() {
+            decks = JSON.parse(localStorage.getItem('monsterDecks')) || [];
+            renderDeckSelectionScreen();
+        }
+
+        function saveDecks() {
+            localStorage.setItem('monsterDecks', JSON.stringify(decks));
+            renderDeckSelectionScreen();
+        }
+
+        function renderDeckSelectionScreen() {
+            deckList.innerHTML = '';
+            if (decks.length === 0) {
+                deckList.innerHTML = `<p class="text-gray-500 text-xl">デッキがありません。<br>あたらしいデッキをつくろう！</p>`;
+            }
+            decks.forEach((deck, index) => {
+                const deckEl = document.createElement('div');
+                deckEl.className = 'flex items-center gap-4';
+                deckEl.innerHTML = `
+                    <button data-index="${index}" class="start-game-btn flex-grow bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 px-6 rounded-lg text-2xl btn-3d">${deck.name} (${deck.questions.length}もん)</button>
+                    <button data-index="${index}" class="edit-deck-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold p-4 rounded-lg btn-3d text-2xl">✏️</button>
+                    <button data-index="${index}" class="delete-deck-btn bg-red-500 hover:bg-red-600 text-white font-bold p-4 rounded-lg btn-3d text-2xl">🗑️</button>
+                `;
+                deckList.appendChild(deckEl);
+            });
+        }
+
+        // --- デッキ編集画面の処理 ---
+        let tempQuestions = [];
+        function openDeckEditor(index = -1) {
+            currentDeckIndex = index;
+            if (index === -1) {
+                deckNameInput.value = '';
+                tempQuestions = [];
+            } else {
+                deckNameInput.value = decks[index].name;
+                tempQuestions = JSON.parse(JSON.stringify(decks[index].questions));
+            }
+            renderQuestionsList();
+            showScreen('deckEditor');
+        }
+
+        function renderQuestionsList() {
+            questionsList.innerHTML = '';
+            if(tempQuestions.length === 0) {
+                questionsList.innerHTML = `<p class="text-gray-400 text-center p-4 text-lg">まだ問題がありません</p>`;
+            }
+            tempQuestions.forEach((q, index) => {
+                const qEl = document.createElement('div');
+                qEl.className = 'bg-white p-3 border rounded flex justify-between items-center text-lg';
+                qEl.innerHTML = `
+                    <span class="truncate pr-2"><b>Q:</b> ${q.q} / <b>A:</b> ${q.a}</span>
+                    <button data-index="${index}" class="delete-question-btn bg-red-500 text-white rounded px-3 py-1 text-base">さくじょ</button>
+                `;
+                questionsList.appendChild(qEl);
+            });
+        }
+
+        // --- ゲーム開始準備 ---
+        function showSetupScreen(deckIndex) {
+            currentDeckIndex = deckIndex;
+            const deck = decks[deckIndex];
+            setupTitle.textContent = `『${deck.name}』`;
+            questionCountButtons.innerHTML = '';
+            const counts = [5, 10, 15, 20];
+            counts.forEach(count => {
+                 questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-4 rounded-lg text-2xl btn-3d">${count}ひき</button>`;
+            });
+             if (deck.questions.length > 0 && deck.questions.length < 5) {
+                 questionCountButtons.innerHTML += `<button data-questions="${deck.questions.length}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-4 rounded-lg text-2xl btn-3d">${deck.questions.length}ひき</button>`;
+            }
+            if (deck.questions.length === 0) {
+                 questionCountButtons.innerHTML = `<p class="text-gray-500 col-span-2 text-xl">問題がありません。<br>デッキを編集してください。</p>`
+            }
+            showScreen('setup');
+        }
+
+        // --- ゲーム本体 ---
+        function startGame(numQuestions) {
+            totalMonsters = numQuestions;
+            defeatedMonsters = 0;
+            mistakes = 0;
+            buttonsDisabled = false;
+
+            let deckQuestions = [...decks[currentDeckIndex].questions];
+            currentQuestions = deckQuestions.sort(() => 0.5 - Math.random());
+            currentQuestions.forEach(q => q.result = null);
+            currentQuestionIndex = 0;
+
+            updateLives();
+            showScreen('main');
+            initializeCanvas();
+            spawnMonster();
+            displayQuestion();
+            updateCounter();
+        }
+
+        function nextTurn() {
+            buttonsDisabled = false;
+            updateCounter();
+            spawnMonster();
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            clearCanvas();
+
+            if (currentQuestionIndex >= currentQuestions.length) {
+                if (mistakes < MAX_MISTAKES) {
+                    showClearScreen();
+                } else {
+                    showGameOverScreen();
+                }
+                return;
+            }
+
+            const qa = currentQuestions[currentQuestionIndex];
+            questionDisplay.innerHTML = `<b>もんだい：</b> ${qa.q}`;
+            buttonsDisabled = false;
+            startTimer();
+        }
+
+        function spawnMonster() {
+            monsterArea.innerHTML = '';
+            let monster;
+            let monsterSize = 'w-60 h-60';
+
+            if (defeatedMonsters === totalMonsters - 1) {
+                monster = BOSS_MONSTER;
+                monsterTitle.textContent = `ついに${monster.name}があらわれた！`;
+                monsterSize = 'w-60 h-60';
+            } else {
+                monster = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
+                monsterTitle.textContent = `${monster.name}があらわれた！`;
+            }
+
+            const monsterEl = document.createElement('div');
+            monsterEl.className = `${monsterSize} animate-spawn flex items-center justify-center`;
+
+            // 画像を試して、失敗したら絵文字を表示
+            const img = document.createElement('img');
+            img.src = monster.image;
+            img.className = 'w-full h-full object-contain rounded-lg';
+            img.alt = monster.name;
+
+            const fallbackEl = document.createElement('div');
+            fallbackEl.textContent = monster.emoji;
+            fallbackEl.className = 'text-8xl';
+            fallbackEl.style.display = 'none';
+
+            img.onerror = () => {
+                img.style.display = 'none';
+                fallbackEl.style.display = 'block';
+            };
+
+            monsterEl.appendChild(img);
+            monsterEl.appendChild(fallbackEl);
+            monsterArea.appendChild(monsterEl);
+        }
+
+        function updateCounter() {
+            counter.textContent = `のこり ${totalMonsters - defeatedMonsters} ひき`;
+        }
+
+        function updateLives() {
+            livesArea.innerHTML = '❤️'.repeat(MAX_MISTAKES - mistakes) + '🖤'.repeat(mistakes);
+        }
+
+        function handleCorrect() {
+            stopTimer();
+            if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
+            buttonsDisabled = true;
+
+            currentQuestions[currentQuestionIndex].result = 'correct';
+            const monsterEl = monsterArea.querySelector('div');
+
+            monsterEl?.classList.add('animate-defeat');
+
+            monsterEl?.addEventListener('animationend', () => {
+                defeatedMonsters++;
+                currentQuestionIndex++;
+                if (defeatedMonsters >= totalMonsters) {
+                    showClearScreen();
+                } else {
+                    nextTurn();
+                }
+            }, { once: true });
+        }
+
+        function handleRetry() {
+            if (buttonsDisabled) return;
+
+            const monsterEl = monsterArea.querySelector('div');
+            monsterEl?.classList.add('animate-shake');
+            monsterEl?.addEventListener('animationend', () => {
+                monsterEl.classList.remove('animate-shake');
+            }, { once: true });
+
+            clearCanvas();
+        }
+
+        function handleTimeUp() {
+            stopTimer();
+            if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
+            buttonsDisabled = true;
+
+            currentQuestions[currentQuestionIndex].result = 'incorrect';
+            mistakes++;
+            updateLives();
+
+            if (mistakes >= MAX_MISTAKES) {
+                showGameOverScreen();
+                return;
+            }
+
+            const monsterEl = monsterArea.querySelector('div');
+            monsterEl?.classList.add('animate-shake');
+
+            monsterEl?.addEventListener('animationend', () => {
+                monsterEl.classList.remove('animate-shake');
+                currentQuestionIndex++;
+
+                if (currentQuestionIndex >= currentQuestions.length) {
+                    showGameOverScreen();
+                } else {
+                    displayQuestion();
+                }
+            }, { once: true });
+        }
+
+        // --- タイマー機能 ---
+        function startTimer() {
+            stopTimer();
+            let timeLeft = TIME_LIMIT;
+            timerBar.style.transition = 'width 1s linear';
+
+            const updateTimerDisplay = () => {
+                const percentage = (timeLeft / TIME_LIMIT) * 100;
+                timerBar.style.width = `${percentage}%`;
+            };
+
+            updateTimerDisplay();
+
+            questionTimer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft < 0) {
+                    handleTimeUp();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (questionTimer) {
+                clearInterval(questionTimer);
+                questionTimer = null;
+            }
+            timerBar.style.transition = 'none';
+        }
+
+        // --- Canvas描画 ---
+        function initializeCanvas() {
+            if(!canvasCtx) canvasCtx = handwritingCanvas.getContext('2d');
+            const { width, height } = handwritingCanvas.getBoundingClientRect();
+            handwritingCanvas.width = width;
+            handwritingCanvas.height = height;
+            canvasCtx.strokeStyle = '#374151';
+            canvasCtx.lineWidth = 5;
+            canvasCtx.lineJoin = 'round';
+            canvasCtx.lineCap = 'round';
+            clearCanvas();
+        }
+
+        function clearCanvas() {
+            if(canvasCtx) canvasCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+        }
+
+        function getCoords(e) {
+            const rect = handwritingCanvas.getBoundingClientRect();
+            const touch = e.touches && e.touches[0];
+            return [
+                (touch ? touch.clientX : e.clientX) - rect.left,
+                (touch ? touch.clientY : e.clientY) - rect.top
+            ];
+        }
+
+        function startDrawing(e) { e.preventDefault(); isDrawing = true; [lastX, lastY] = getCoords(e); }
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const [currentX, currentY] = getCoords(e);
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(lastX, lastY);
+            canvasCtx.lineTo(currentX, currentY);
+            canvasCtx.stroke();
+            [lastX, lastY] = [currentX, currentY];
+        }
+        function stopDrawing() { isDrawing = false; }
+
+        function renderResults(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '<h3 class="text-2xl font-bold mb-4 text-center">もんだいとこたえ</h3>';
+            const list = document.createElement('ul');
+            list.className = 'space-y-4';
+            const answeredQuestions = currentQuestions.filter(q => q.result);
+            answeredQuestions.forEach(qa => {
+                const item = document.createElement('li');
+                item.className = 'border-b border-gray-400 pb-3 text-lg';
+                let resultHTML = '';
+                if (qa.result === 'correct') {
+                    resultHTML = `<span class="font-bold text-green-500 mr-2">[せいかい！]</span>`;
+                } else if (qa.result === 'incorrect') {
+                    resultHTML = `<span class="font-bold text-red-500 mr-2">[ふせいかい…]</span>`;
+                }
+                item.innerHTML = `<div>${resultHTML}<b>Q:</b> ${qa.q}</div><div class="pl-6"><b class="${containerId.includes('clear') ? 'text-blue-600' : 'text-cyan-400'}">A:</b> ${qa.a}</div>`;
+                list.appendChild(item);
+            });
+            if (answeredQuestions.length === 0) { list.innerHTML = `<p class="text-gray-500">けっかがありません</p>`; }
+            container.appendChild(list);
+        }
+
+        function showClearScreen() {
+            stopTimer();
+            showScreen('clear');
+            renderResults('clear-results-area');
+            startConfetti();
+        }
+
+        function showGameOverScreen() {
+            stopTimer();
+            showScreen('gameover');
+            renderResults('gameover-results-area');
+        }
+
+        // --- イベントリスナー ---
+        deckList.addEventListener('click', e => {
+            const target = e.target.closest('button');
+            if (!target) return;
+            const index = parseInt(target.dataset.index);
+            if (target.classList.contains('start-game-btn')) {
+                if(decks[index].questions.length > 0) showSetupScreen(index);
+                else alert('このデッキには問題がありません。編集してください。');
+            } else if (target.classList.contains('edit-deck-btn')) {
+                openDeckEditor(index);
+            } else if (target.classList.contains('delete-deck-btn')) {
+                if (confirm(`「${decks[index].name}」を本当に削除しますか？`)) {
+                    decks.splice(index, 1);
+                    saveDecks();
+                }
+            }
+        });
+
+        newDeckBtn.addEventListener('click', () => openDeckEditor(-1));
+        addQuestionBtn.addEventListener('click', () => {
+            const q = newQuestionInput.value.trim();
+            const a = newAnswerInput.value.trim();
+            if (q && a) {
+                tempQuestions.push({ q, a });
+                newQuestionInput.value = '';
+                newAnswerInput.value = '';
+                renderQuestionsList();
+                newQuestionInput.focus();
+            }
+        });
+        questionsList.addEventListener('click', e => {
+            if (e.target.classList.contains('delete-question-btn')) {
+                const index = parseInt(e.target.dataset.index);
+                tempQuestions.splice(index, 1);
+                renderQuestionsList();
+            }
+        });
+        saveDeckBtn.addEventListener('click', () => {
+            const name = deckNameInput.value.trim();
+            if (!name) {
+                alert('デッキのなまえをいれてください。');
+                return;
+            }
+            const newDeck = { name, questions: tempQuestions };
+            if (currentDeckIndex === -1) {
+                decks.push(newDeck);
+            } else {
+                decks[currentDeckIndex] = newDeck;
+            }
+            saveDecks();
+            showScreen('deckSelection');
+        });
+        backToSelectionBtn.addEventListener('click', () => showScreen('deckSelection'));
+        questionCountButtons.addEventListener('click', e => {
+            if (e.target.classList.contains('question-btn')) {
+                startGame(parseInt(e.target.dataset.questions));
+            }
+        });
+        backToDecksBtn.addEventListener('click', () => showScreen('deckSelection'));
+        correctBtn.addEventListener('click', handleCorrect);
+        retryBtn.addEventListener('click', handleRetry);
+
+        document.querySelectorAll('.restart-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                showScreen('deckSelection');
+                stopConfetti();
+            });
+        });
+
+        // Canvas Event Listeners
+        handwritingCanvas.addEventListener('mousedown', startDrawing);
+        handwritingCanvas.addEventListener('mousemove', draw);
+        handwritingCanvas.addEventListener('mouseup', stopDrawing);
+        handwritingCanvas.addEventListener('mouseout', stopDrawing);
+        handwritingCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        handwritingCanvas.addEventListener('touchmove', draw, { passive: false });
+        handwritingCanvas.addEventListener('touchend', stopDrawing);
+        clearCanvasBtn.addEventListener('click', clearCanvas);
+        window.addEventListener('resize', initializeCanvas);
+
+        // --- 初期化 ---
+        loadDecks();
+        showScreen('deckSelection');
+
+        // --- 紙吹雪 (省略、変更なし) ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confettiParticles = []; let animationFrameId;
+        function startConfetti(){if(!canvas)return;canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;confettiParticles=[];for(let i=0;i<100;i++){confettiParticles.push(createParticle())}renderConfetti()}
+        function stopConfetti(){if(animationFrameId)cancelAnimationFrame(animationFrameId)}
+        function createParticle(){const colors=['#f9a8d4','#f472b6','#86efac','#34d399','#67e8f9','#22d3ee','#fcd34d','#fbbf24'];return{x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,size:Math.random()*8+5,color:colors[Math.floor(Math.random()*colors.length)],speed:Math.random()*3+2,angle:Math.random()*360,spin:Math.random()<.5?-1:1}}
+        function renderConfetti(){if(!canvas)return;ctx.clearRect(0,0,canvas.width,canvas.height);confettiParticles.forEach((p,i)=>{p.y+=p.speed;p.angle+=p.spin*5;ctx.save();ctx.fillStyle=p.color;ctx.translate(p.x+p.size/2,p.y+p.size/2);ctx.rotate(p.angle*Math.PI/180);ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);ctx.restore();if(p.y>canvas.height){confettiParticles[i]=createParticle();confettiParticles[i].y=-10}});animationFrameId=requestAnimationFrame(renderConfetti)}
+    });
+    </script>
+</body>
+</html>
+
