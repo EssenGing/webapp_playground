@@ -71,6 +71,7 @@
                 <h2 class="text-3xl font-bold mb-6">どのデッキでたたかう？</h2>
                 <div id="deck-list" class="space-y-4 mb-6 max-h-80 overflow-y-auto"></div>
                 <button id="new-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 w-full rounded-lg text-2xl btn-3d">+ あたらしいデッキをつくる</button>
+                <p class="text-sm text-gray-500 mt-6">効果音：OtoLogic</p>
             </div>
         </div>
 
@@ -170,6 +171,9 @@
 
     </div>
 
+    <audio id="correct-sound" src="sounds/correct.mp3" preload="auto"></audio>
+    <audio id="incorrect-sound" src="sounds/incorrect.mp3" preload="auto"></audio>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- DOM要素 ---
@@ -204,6 +208,8 @@
         const handwritingCanvas = document.getElementById('handwriting-canvas');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const timerBar = document.getElementById('timer-bar');
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
 
         // --- ゲーム状態 ---
         let decks = [];
@@ -220,27 +226,35 @@
 
         // --- モンスター ---
         const MONSTERS = [
-            { name: 'サイバイマン', image: 'https://img.atwiki.jp/dragonuteningyougeki/attach/58/58/%E3%82%B5%E3%82%A4%E3%83%90%E3%82%A4%E3%83%9E%E3%83%B3.png', emoji: '🌱' },
-            { name: 'ラディッツ', image: 'https://dragon-ball-official.com/dragonball/jp/news/2021/09/chara21_1.jpg?_=1755538260', emoji: '👨‍' },
-            { name: 'ナッパ', image: 'https://dba.bn-ent.net/character/images/nappa/portrait.png', emoji: '💪' },
-            { name: 'ベジータ', image: 'https://dba.bn-ent.net/character/images/vegeta/portrait.png', emoji: '👑' },
-            { name: 'ギニュー特戦隊', image: 'https://lineup.toei-anim.co.jp/upload/save_image/episode/6168/story_img_1.jpg', emoji: '🕺' },
-            { name: 'フリーザ第一形態', image: 'https://dragon-ball-official.com/dragonball/jp/news/2021/10/chara23_1.jpg?_=1756504020', emoji: '👹' },
-            // { name: 'フリーザ最終形態', image: 'https://i.imgur.com/placeholder7.png', emoji: '�' },
-            // { name: 'セル第一形態', image: 'https://avatars.dicebear.com/api/bottts/cell1.svg', emoji: '🦂' },
-            // { name: 'セル完全体', image: 'https://i.imgur.com/placeholder9.png', emoji: '�' },
-            // { name: '魔人ブウ', image: 'https://avatars.dicebear.com/api/bottts/majin-buu.svg', emoji: '🍭' },
-            // { name: 'ブロリー', image: 'https://i.imgur.com/placeholder11.png', emoji: '�' },
-            // { name: 'ジャネンバ', image: 'https://i.imgur.com/placeholder12.png', emoji: '�' }
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhXNTz9LqGn-dTyacBt2n0JiCetzrkETOcF1neofXOypU1Zsb9afUTiMRm_G71xMuiuUH7WQKV8or5nhAARuDmTh7mp31wAh5mckUaUgTU3D_Hzz7hjDRsddYUWpXWrSdYrozHOj9heLMw/s170/monster01.png', emoji: '🌱' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhcGlFVplWQL65fn-lrtazTQL6rvrthKW6gtO2EeHeeNDEP2nJtpdUhDLzsT60ucQ25WT3KYA7Iw2p0Ji9Kn1RvnmTWhVqc8XbvTIFUu9P6zabvrX4r78cSjnxhhWELWL7piPX4rUeSdnI/s170/monster02.png', emoji: '👨‍' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEheSepCQGD9tU90G7ls1ufJ6LVwvFkjxrwiBzKumO7slJKxsf8QvrfMJjP2yj8ZSy5m5PM5KVh0vU8bVe7VtF36dMvoTNLDZXdzn5bR3mb-uwucFLKX-nEeMijuw9HiXOzC5IENJ5uKfFE/s170/monster03.png', emoji: '💪' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgrm2jo51T07UB6z83ceuz7AwQuTv3C_j-JfOmq7rRJptgH2xsSboxBLtVfhDwFO3R53Cl5nQiuE8aAkz0In702dv-Bp75S7cipUjtRwToNAEmGMZe1wNZPDachQ4p2eOWTAbq23kGvDno/s170/monster04.png', emoji: '👑' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLcewHTO7BvACy7vf0mbeJo8gHXzznwUcJ_D615Cutcc_ix_t8UUYllNgqAE0QEe586HseeC3EJT_UZRhPzwpUmkdzU77PKEE9R_vSiD7qYtxMeDoemsGnKGzPPqDf3dmRLWcB_agvsUM/s170/monster05.png', emoji: '🕺' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiwf_Xp6Betg2IhK6EqdWnfa4l6wV7rniHFbBE7rMTnqE28eaEmUP6ZgZZusF5TxH_R-8r9ENcekbLJGgNpy4XoZzeaV6nGNeQz5V0pKo105ReDxbyLnIxUyODtmqZvGaRZmWmESTGcDXM/s170/monster06.png', emoji: '👹' },
         ];
-        const BOSS_MONSTER = { name: '神龍（シェンロン）', image: 'https://cdn.ibispaint.com/movie/277/351/277351048/image277351048.png', emoji: '🐉' };
-
+        const BOSS_MONSTER = { name: 'ドラゴン', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhWsvL0brkhZn9zU4BpyeOuPORRguZz4iPTopr4phHynEW0DATC9W5j11fWGDlghx_Eysn_5gGSLuBYybC28GRYzsPZB_qpNjFU8qMGpgL_fEi5iUfZv4GnEn_v-sI80WTqOPbSqrg1-3c/s180-c/fantasy_dragon.png', emoji: '🐉' };
 
         // --- Canvas State ---
         let canvasCtx;
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
+
+        // --- サウンド ---
+        function playSound(type) {
+            if (type === 'correct') {
+                if (correctSound) {
+                    correctSound.currentTime = 0;
+                    correctSound.play().catch(e => console.error("Error playing correct sound:", e));
+                }
+            } else if (type === 'incorrect') {
+                if (incorrectSound) {
+                    incorrectSound.currentTime = 0;
+                    incorrectSound.play().catch(e => console.error("Error playing incorrect sound:", e));
+                }
+            }
+        }
 
         // --- 画面切り替え ---
         function showScreen(screenId) {
@@ -388,7 +402,6 @@
             const monsterEl = document.createElement('div');
             monsterEl.className = `${monsterSize} animate-spawn flex items-center justify-center`;
 
-            // 画像を試して、失敗したら絵文字を表示
             const img = document.createElement('img');
             img.src = monster.image;
             img.className = 'w-full h-full object-contain rounded-lg';
@@ -421,6 +434,7 @@
             stopTimer();
             if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
             buttonsDisabled = true;
+            playSound('correct'); // 正解音を再生
 
             currentQuestions[currentQuestionIndex].result = 'correct';
             const monsterEl = monsterArea.querySelector('div');
@@ -440,6 +454,7 @@
 
         function handleRetry() {
             if (buttonsDisabled) return;
+            playSound('incorrect'); // 不正解音を再生
 
             const monsterEl = monsterArea.querySelector('div');
             monsterEl?.classList.add('animate-shake');
@@ -454,6 +469,7 @@
             stopTimer();
             if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
             buttonsDisabled = true;
+            playSound('incorrect'); // 不正解音を再生
 
             currentQuestions[currentQuestionIndex].result = 'incorrect';
             mistakes++;
