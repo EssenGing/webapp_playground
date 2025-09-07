@@ -171,9 +171,6 @@
 
     </div>
 
-    <audio id="correct-sound" src="sounds/correct.mp3" preload="auto"></audio>
-    <audio id="incorrect-sound" src="sounds/incorrect.mp3" preload="auto"></audio>
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- DOM要素 ---
@@ -208,8 +205,6 @@
         const handwritingCanvas = document.getElementById('handwriting-canvas');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const timerBar = document.getElementById('timer-bar');
-        const correctSound = document.getElementById('correct-sound');
-        const incorrectSound = document.getElementById('incorrect-sound');
 
         // --- ゲーム状態 ---
         let decks = [];
@@ -232,6 +227,13 @@
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgrm2jo51T07UB6z83ceuz7AwQuTv3C_j-JfOmq7rRJptgH2xsSboxBLtVfhDwFO3R53Cl5nQiuE8aAkz0In702dv-Bp75S7cipUjtRwToNAEmGMZe1wNZPDachQ4p2eOWTAbq23kGvDno/s170/monster04.png', emoji: '👑' },
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLcewHTO7BvACy7vf0mbeJo8gHXzznwUcJ_D615Cutcc_ix_t8UUYllNgqAE0QEe586HseeC3EJT_UZRhPzwpUmkdzU77PKEE9R_vSiD7qYtxMeDoemsGnKGzPPqDf3dmRLWcB_agvsUM/s170/monster05.png', emoji: '🕺' },
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiwf_Xp6Betg2IhK6EqdWnfa4l6wV7rniHFbBE7rMTnqE28eaEmUP6ZgZZusF5TxH_R-8r9ENcekbLJGgNpy4XoZzeaV6nGNeQz5V0pKo105ReDxbyLnIxUyODtmqZvGaRZmWmESTGcDXM/s170/monster06.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj__yRJc635a99L5yetg9An8Y-Kgk055BufQNaWzz5p0MZX2JIYgSCLAgMrPmdxwl1nmW_yp59Wp1xNmm-raEjtYypJWsGDgQCcMKvAmWEkggPj9Di_pcF4yBoLb_FomQeXsq04-PtQbGM/s170/monster07.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjGlhVDUtrBH4pfZmQmxvqY6PhZ-oKyejic_4guGF0i8gBZvZKITDwX1U8Frl1jSgxJ1j3BwjpI2MIgV40rqT9e5-wfVNd_1Us-bA5FnCuytfthrrDLGHSaSjn8l9Ik66JA8-Wg-YqQOQA/s800/monster08.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhlGJd95yeHf7v5wPzLg4-lyxAI7yPHY4OzqxEdLY_Lf7DA3MvFsgh4SeUN2FNjg4juzBWIcFUNYGHOCIh3HTLAunpF4J-EpbRRkyhliav43vl4eyY6-ENhHnGPLmrc-OkwTRRcxa6m4cg/s170/monster09.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjpni__YcXjSExJ6M74waXyzQKDw0zMwi0SZ0yl-0PAPALq2DO4sKlLcfR0Io8fkyFRRhzLPnp2NftJrthjbnmtSmJVoJNQ5pjHFM_zeYNmJsgYJIgVkzHFkgyMHlhr3uPt-ZZEqAysYCc/s170/monster10.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhdW2bw5XFelBMMNMSx4_PST670AxRputfVYU_24fkGYmNeXerrd48CYIgE70vrT711Lwa5Xlgk1DqRSGjxfTZgpq26ky_TV5BazG_rhuMGufQgFFTBJE30qt04EHrTMRe2FqemO0Bk-bM/s170/monster11.png', emoji: '👹' },
+            { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg_aBArC2jvlxaDm_rW1HV2niXtxb9MAhuwFIZSIvGrQDAEci0DQBimJKE56oxhb49c2EiDaf16YNWVlUIw_OBcdbltm4JN0DP2CazcRJqsdNnAs4gxK2wSvTC6x8qkcqoN4OwQ2tVy7KI/s170/monster12.png', emoji: '👹' },
+
         ];
         const BOSS_MONSTER = { name: 'ドラゴン', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhWsvL0brkhZn9zU4BpyeOuPORRguZz4iPTopr4phHynEW0DATC9W5j11fWGDlghx_Eysn_5gGSLuBYybC28GRYzsPZB_qpNjFU8qMGpgL_fEi5iUfZv4GnEn_v-sI80WTqOPbSqrg1-3c/s180-c/fantasy_dragon.png', emoji: '🐉' };
 
@@ -243,17 +245,8 @@
 
         // --- サウンド ---
         function playSound(type) {
-            if (type === 'correct') {
-                if (correctSound) {
-                    correctSound.currentTime = 0;
-                    correctSound.play().catch(e => console.error("Error playing correct sound:", e));
-                }
-            } else if (type === 'incorrect') {
-                if (incorrectSound) {
-                    incorrectSound.currentTime = 0;
-                    incorrectSound.play().catch(e => console.error("Error playing incorrect sound:", e));
-                }
-            }
+            const sound = new Audio(type === 'correct' ? 'sounds/correct.mp3' : 'sounds/incorrect.mp3');
+            sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
         }
 
         // --- 画面切り替え ---
