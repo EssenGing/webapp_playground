@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>約数タイムアタック</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=M+PLUS+Rounded+1c:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* M PLUS Rounded 1c フォントを適用 */
+        body {
+            font-family: 'Inter', 'M PLUS Rounded 1c', sans-serif;
+            touch-action: manipulation; /* ダブルタップズームを無効化 */
+        }
+
+        /* カードのフリップアニメーション */
+        .card {
+            transform-style: preserve-3d;
+            transition: transform 0.5s, opacity 0.5s;
+        }
+        .card.is-correct {
+            transform: rotateY(180deg) scale(0.8);
+            opacity: 0;
+        }
+        .card.is-incorrect {
+            animation: shake 0.5s;
+        }
+
+        /* カードが揺れるアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+
+        /* 画面のフェードイン・アウト */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen">
+
+    <div id="game-container" class="w-full max-w-md mx-auto p-4 sm:p-6 text-center">
+
+        <!-- スタート画面 -->
+        <div id="start-screen" class="screen bg-white p-8 rounded-2xl shadow-lg">
+            <h1 class="text-4xl font-bold mb-2 text-indigo-600">約数タイムアタック</h1>
+            <p class="text-slate-600 mb-6">お題の数の約数をすべて見つけよう！</p>
+            <button id="start-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-xl transition-transform transform hover:scale-105 shadow-md">
+                スタート
+            </button>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen" class="screen hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-lg mb-4">
+                <div class="flex justify-between items-center text-lg">
+                    <div class="text-left">
+                        <span class="text-slate-500">ステージ</span>
+                        <p class="font-bold text-2xl"><span id="stage-display">1</span> / 3</p>
+                    </div>
+                    <div class="text-right">
+                         <span class="text-slate-500">タイム</span>
+                        <p class="font-bold text-2xl"><span id="timer-display">0.00</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl text-slate-600 mb-1">お題</h2>
+                <p id="problem-number-display" class="text-6xl font-bold text-indigo-600 mb-6"></p>
+                <!-- 数字カードのフィールド -->
+                <div id="card-grid" class="grid grid-cols-4 gap-3">
+                    <!-- JavaScriptでカードが生成される -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="end-screen" class="screen hidden">
+             <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-2 text-indigo-600">クリア！</h2>
+                <p class="text-slate-600 mb-1">最終タイム</p>
+                <p id="final-time-display" class="text-5xl font-bold mb-4"></p>
+                <p class="text-slate-600 mb-1">ペナルティ</p>
+                <p id="penalty-display" class="text-2xl font-bold text-red-500 mb-6"></p>
+                <button id="retry-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-xl transition-transform transform hover:scale-105 shadow-md">
+                    もう一度挑戦
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const retryButton = document.getElementById('retry-button');
+        const stageDisplay = document.getElementById('stage-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const problemNumberDisplay = document.getElementById('problem-number-display');
+        const cardGrid = document.getElementById('card-grid');
+        const finalTimeDisplay = document.getElementById('final-time-display');
+        const penaltyDisplay = document.getElementById('penalty-display');
+
+        // ゲームの状態を管理する変数
+        let currentStage = 0;
+        let problemNumber = 0;
+        let divisors = [];
+        let remainingDivisors = [];
+        let penaltySeconds = 0;
+        let timerInterval;
+        let startTime;
+        let incorrectCards = new Set();
+
+        const MAX_STAGE = 3;
+        const PENALTY_PER_MISTAKE = 3;
+
+        // イベントリスナーの設定
+        startButton.addEventListener('click', startGame);
+        retryButton.addEventListener('click', startGame);
+
+        /**
+         * 約数の配列を取得する関数
+         * @param {number} num - 約数を探す対象の数
+         * @returns {number[]} 約数の配列
+         */
+        function getDivisors(num) {
+            const result = [];
+            for (let i = 1; i <= num; i++) {
+                if (num % i === 0) {
+                    result.push(i);
+                }
+            }
+            return result;
+        }
+
+        /**
+         * 配列をシャッフルする関数（Fisher-Yatesアルゴリズム）
+         * @param {Array} array - シャッフル対象の配列
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * ゲームを開始する関数
+         */
+        function startGame() {
+            currentStage = 0;
+            penaltySeconds = 0;
+            incorrectCards.clear();
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            nextStage();
+            startTimer();
+        }
+
+        /**
+         * タイマーを開始する関数
+         */
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 10);
+        }
+
+        /**
+         * タイマー表示を更新する関数
+         */
+        function updateTimer() {
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const totalTime = elapsedTime + penaltySeconds;
+            timerDisplay.textContent = totalTime.toFixed(2);
+        }
+
+        /**
+         * 次のステージに進む関数
+         */
+        function nextStage() {
+            currentStage++;
+            if (currentStage > MAX_STAGE) {
+                endGame();
+                return;
+            }
+
+            stageDisplay.textContent = currentStage;
+            incorrectCards.clear();
+
+            // 1から50までのランダムな数をお題として設定
+            problemNumber = Math.floor(Math.random() * 50) + 1;
+            problemNumberDisplay.textContent = problemNumber;
+
+            divisors = getDivisors(problemNumber);
+            remainingDivisors = [...divisors];
+
+            // カード用の数字を生成
+            const cardNumbers = [...divisors];
+            while (cardNumbers.length < 12) {
+                const randomNumber = Math.floor(Math.random() * 50) + 1;
+                // 重複せず、かつ約数でない数を追加
+                if (!cardNumbers.includes(randomNumber)) {
+                    cardNumbers.push(randomNumber);
+                }
+            }
+
+            shuffleArray(cardNumbers);
+            renderCards(cardNumbers);
+        }
+
+        /**
+         * カードを画面に描画する関数
+         * @param {number[]} numbers - カードに表示する数字の配列
+         */
+        function renderCards(numbers) {
+            cardGrid.innerHTML = '';
+            numbers.forEach(num => {
+                const card = document.createElement('button');
+                card.className = 'card bg-white hover:bg-indigo-100 border-2 border-slate-200 text-2xl font-bold p-4 rounded-lg aspect-square flex items-center justify-center transition focus:outline-none focus:ring-2 focus:ring-indigo-400';
+                card.textContent = num;
+                card.dataset.number = num;
+                card.addEventListener('click', handleCardClick);
+                cardGrid.appendChild(card);
+            });
+        }
+
+        /**
+         * カードクリック時の処理
+         * @param {Event} event - クリックイベント
+         */
+        function handleCardClick(event) {
+            const card = event.currentTarget;
+            const number = parseInt(card.dataset.number, 10);
+
+            // すでに正解したカードは無視
+            if (card.classList.contains('is-correct')) {
+                return;
+            }
+
+            const isCorrect = remainingDivisors.includes(number);
+
+            if (isCorrect) {
+                // 正解の処理
+                card.classList.add('is-correct', 'border-indigo-500', 'bg-indigo-100');
+                card.disabled = true;
+
+                // remainingDivisorsから正解した数を削除
+                const index = remainingDivisors.indexOf(number);
+                if (index > -1) {
+                    remainingDivisors.splice(index, 1);
+                }
+
+                // 全て正解したら次のステージへ
+                if (remainingDivisors.length === 0) {
+                    setTimeout(nextStage, 800);
+                }
+            } else {
+                // 不正解の処理
+                if (!incorrectCards.has(number)) {
+                    penaltySeconds += PENALTY_PER_MISTAKE;
+                    incorrectCards.add(number);
+                }
+                card.classList.add('is-incorrect');
+                card.addEventListener('animationend', () => {
+                    card.classList.remove('is-incorrect');
+                }, { once: true });
+            }
+        }
+
+        /**
+         * ゲームを終了する関数
+         */
+        function endGame() {
+            clearInterval(timerInterval);
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+
+            const finalTime = parseFloat(timerDisplay.textContent);
+            finalTimeDisplay.textContent = finalTime.toFixed(2);
+            penaltyDisplay.textContent = `+${penaltySeconds.toFixed(2)}秒`;
+        }
+
+    </script>
+</body>
+</html>
