@@ -4,178 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分数大小比較チャレンジ</title>
+    <link rel="icon" href="favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
     <style>
         html, body {
-            /* Prevent scrolling on touch devices like iPad */
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
         body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
             touch-action: manipulation;
+        }
+        .btn-3d {
+            transition: all 0.1s ease-out;
+            box-shadow: 0 6px 0 #a3a3a3;
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a3a3a3;
         }
         .fraction {
             display: inline-flex;
             flex-direction: column;
             align-items: center;
-            margin: 0 1rem;
-            font-size: 2.5rem;
+            margin: 0 0.5rem; /* Reduced margin for smaller screens */
+            font-size: 2.5rem; /* Base font size for mobile */
             line-height: 1.1;
         }
         .numerator {
             padding-bottom: 0.25rem;
         }
         .denominator {
-            border-top: 2px solid currentColor;
+            border-top: 3px solid currentColor;
             padding-top: 0.25rem;
         }
         .hidden {
             display: none;
         }
         #scratchpad {
-            border: 2px solid #4a5568;
+            border: 2px solid #d1d5db;
             border-radius: 0.5rem;
             cursor: crosshair;
+            background-color: #f9fafb;
         }
         .answer-btn {
-            font-size: 2.5rem;
-            width: 80px;
-            height: 80px;
-            transition: all 0.2s ease-in-out;
-        }
-        .answer-btn:hover {
-            transform: scale(1.1);
-            background-color: #4a5568;
+            font-size: 2rem; /* Base font size for mobile */
+            width: 70px; /* Base size for mobile */
+            height: 70px;
         }
         .question-count-btn {
-            padding: 0.5rem 1rem;
-            border: 2px solid #4a5568;
-            border-radius: 0.5rem;
-            font-weight: 500;
             transition: all 0.2s ease;
         }
-        .question-count-btn:hover {
-            background-color: #4a5568;
-        }
         .question-count-btn.selected {
-            background-color: #2dd4bf;
-            border-color: #2dd4bf;
+            background-color: #06b6d4; /* cyan-500 */
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 0 #0891b2;
+        }
+         @keyframes celebrate-text {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-celebrate { animation: celebrate-text 1s ease-in-out infinite; }
+
+        /* Responsive adjustments */
+        @media (min-width: 640px) { /* sm breakpoint */
+            .fraction {
+                font-size: 3.5rem;
+                margin: 0 1rem;
+            }
+            .answer-btn {
+                font-size: 3rem;
+                width: 90px;
+                height: 90px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+<body class="bg-yellow-50 text-gray-800 flex items-center justify-center min-h-screen p-2 sm:p-4">
 
-    <div id="main-container" class="w-full max-w-2xl mx-auto">
+    <div id="main-container" class="w-full max-w-2xl mx-auto text-center">
 
-        <!-- スタート画面 -->
-        <div id="start-screen" class="text-center bg-gray-800 p-8 rounded-xl shadow-2xl">
-            <h1 class="text-4xl font-bold mb-4 text-cyan-400">分数大小比較チャレンジ</h1>
-            <div class="text-left max-w-md mx-auto space-y-3 text-gray-300">
-                <p>🚀 2つの分数の大小関係を答えるクイズです。</p>
-                <p>⏱️ 設定した問題数に正解するまでのタイムを競います。</p>
-                <p> Penalties 1問間違えるごとに、最終タイムに3秒が加算されます。</p>
-                <p>✍️ 画面下のエリアに自由に計算メモができます。</p>
-            </div>
-
-            <div class="mt-6">
-                <p class="text-lg font-semibold text-gray-400 mb-3">問題数を選択:</p>
-                <div id="question-count-selector" class="flex justify-center space-x-2 md:space-x-4">
-                    <button class="question-count-btn selected" data-count="3">3問</button>
-                    <button class="question-count-btn" data-count="5">5問</button>
-                    <button class="question-count-btn" data-count="10">10問</button>
+        <!-- Start Screen -->
+        <div id="start-screen" class="space-y-4 sm:space-y-6">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-amber-600">分数大小比較<br>チャレンジ</h1>
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+                <div class="text-left max-w-md mx-auto space-y-2 text-gray-600 mb-6 text-sm sm:text-base">
+                    <p>🚀 2つの分数の大きさを比べるゲームだよ。</p>
+                    <p>⏱️ 正解するまでのタイムを競おう！</p>
+                    <p>⚠️ まちがえるとペナルティタイムが3秒ついかされるよ。</p>
+                    <p>✍️ 計算メモを自由に使って考えよう。</p>
                 </div>
-            </div>
 
-            <button id="start-button" class="mt-8 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg text-xl transition duration-300 transform hover:scale-105">
-                スタート！
-            </button>
-        </div>
+                <div class="mt-6">
+                    <p class="text-lg sm:text-xl font-bold mb-4">なん問チャレンジする？</p>
+                    <div id="question-count-selector" class="flex justify-center gap-2 sm:gap-4">
+                        <button class="question-count-btn btn-3d bg-gray-200 text-xl sm:text-2xl font-bold py-3 px-4 sm:px-6 rounded-lg selected" data-count="3">3問</button>
+                        <button class="question-count-btn btn-3d bg-gray-200 text-xl sm:text-2xl font-bold py-3 px-4 sm:px-6 rounded-lg" data-count="5">5問</button>
+                        <button class="question-count-btn btn-3d bg-gray-200 text-xl sm:text-2xl font-bold py-3 px-4 sm:px-6 rounded-lg" data-count="10">10問</button>
+                    </div>
+                </div>
 
-        <!-- ゲーム画面 -->
-        <div id="game-screen" class="hidden bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl">
-            <!-- ヘッダー情報 -->
-            <div class="flex justify-between items-center mb-6 text-lg">
-                <div class="bg-gray-700 px-4 py-2 rounded-lg">
-                    正解数: <span id="correct-count" class="font-bold text-xl text-green-400">0</span> / <span id="target-count">10</span>
-                </div>
-                <div class="bg-gray-700 px-4 py-2 rounded-lg">
-                    タイム: <span id="timer" class="font-bold text-xl text-yellow-400">0.00</span>
-                </div>
-            </div>
-
-            <!-- 問題表示 -->
-            <div id="question-area" class="flex items-center justify-center my-8 md:my-12">
-                <div id="frac1" class="fraction">
-                    <span class="numerator">1</span>
-                    <span class="denominator">2</span>
-                </div>
-                <div id="placeholder" class="text-5xl font-bold text-cyan-400">?</div>
-                <div id="frac2" class="fraction">
-                    <span class="numerator">2</span>
-                    <span class="denominator">3</span>
-                </div>
-            </div>
-
-            <!-- 解答ボタン -->
-            <div id="answer-buttons" class="flex justify-center space-x-4 md:space-x-8 my-8">
-                <button class="answer-btn bg-gray-700 rounded-full flex items-center justify-center" data-answer="<">&lt;</button>
-                <button class="answer-btn bg-gray-700 rounded-full flex items-center justify-center" data-answer="=">=</button>
-                <button class="answer-btn bg-gray-700 rounded-full flex items-center justify-center" data-answer=">">&gt;</button>
-            </div>
-
-            <!-- 計算エリア -->
-            <div class="mt-8 text-center">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-lg font-semibold text-gray-400">計算エリア</h3>
-                    <button id="clear-canvas-btn" class="bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-4 rounded-md transition duration-300">
-                        クリア
-                    </button>
-                </div>
-                <canvas id="scratchpad"></canvas>
+                <button id="start-button" class="mt-8 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl sm:text-3xl btn-3d">
+                    スタート！
+                </button>
             </div>
         </div>
 
-        <!-- 結果画面 -->
-        <div id="result-screen" class="hidden bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl">
-            <h2 class="text-4xl font-bold text-center mb-6 text-cyan-400">結果</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-8">
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-400">かかった時間</p>
-                    <p id="result-time" class="text-2xl font-bold"></p>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+             <div class="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg">
+                <!-- Header Info -->
+                <div class="flex flex-wrap justify-between items-center mb-4 sm:mb-6 text-base sm:text-xl gap-2">
+                    <div class="bg-gray-200 px-4 py-2 rounded-full">
+                        正解: <span id="correct-count" class="font-bold text-xl sm:text-2xl text-green-500">0</span> / <span id="target-count">3</span>
+                    </div>
+                    <div class="bg-gray-200 px-4 py-2 rounded-full">
+                        タイム: <span id="timer" class="font-bold text-xl sm:text-2xl text-yellow-500">0.00</span>
+                    </div>
                 </div>
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-400">ペナルティ</p>
-                    <p id="result-penalty" class="text-2xl font-bold text-red-400"></p>
+
+                <!-- Question Display -->
+                <div id="question-area" class="flex items-center justify-center my-6 sm:my-8 md:my-10 bg-gray-100 p-4 sm:p-6 rounded-lg min-h-[120px] sm:min-h-[150px]">
+                    <div id="frac1" class="fraction">
+                        <span class="numerator">1</span>
+                        <span class="denominator">2</span>
+                    </div>
+                    <div id="placeholder" class="text-4xl sm:text-6xl font-bold text-amber-500 mx-2 sm:mx-4">?</div>
+                    <div id="frac2" class="fraction">
+                        <span class="numerator">2</span>
+                        <span class="denominator">3</span>
+                    </div>
                 </div>
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-400">最終スコア</p>
-                    <p id="result-score" class="text-3xl font-bold text-yellow-400"></p>
+
+                <!-- Answer Buttons -->
+                <div id="answer-buttons" class="flex justify-center space-x-2 sm:space-x-4 md:space-x-8 my-6 sm:my-8">
+                    <button class="answer-btn btn-3d bg-blue-400 hover:bg-blue-500 text-white rounded-full flex items-center justify-center" data-answer="<">&lt;</button>
+                    <button class="answer-btn btn-3d bg-blue-400 hover:bg-blue-500 text-white rounded-full flex items-center justify-center" data-answer="=">=</button>
+                    <button class="answer-btn btn-3d bg-blue-400 hover:bg-blue-500 text-white rounded-full flex items-center justify-center" data-answer=">">&gt;</button>
+                </div>
+
+                <!-- Calculation Area -->
+                <div class="mt-6 sm:mt-8 text-center">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-600">計算メモ</h3>
+                        <button id="clear-canvas-btn" class="bg-red-500 hover:bg-red-600 text-white text-sm sm:text-md font-bold py-2 px-4 sm:px-5 rounded-lg btn-3d">
+                            けす
+                        </button>
+                    </div>
+                    <canvas id="scratchpad"></canvas>
                 </div>
             </div>
+        </div>
 
-            <h3 class="text-xl font-bold text-center mb-4">問題の振り返り</h3>
-            <div class="max-h-60 overflow-y-auto bg-gray-900 rounded-lg p-2">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-xs text-gray-400 uppercase bg-gray-700">
-                        <tr>
-                            <th class="px-4 py-2">#</th>
-                            <th class="px-4 py-2">問題</th>
-                            <th class="px-4 py-2">あなたの解答</th>
-                            <th class="px-4 py-2 text-center">結果</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                        <!-- 結果がここに挿入されます -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden">
+            <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+            <div class="bg-white p-6 sm:p-12 rounded-2xl shadow-2xl space-y-4 sm:space-y-6">
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-celebrate">クリア！<br>おめでとう！</h1>
 
-            <div class="text-center mt-8">
-                <button id="restart-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg text-xl transition duration-300 transform hover:scale-105">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 text-center text-xl sm:text-2xl">
+                    <div class="bg-gray-100 p-3 sm:p-4 rounded-lg">
+                        <p class="text-base sm:text-lg text-gray-500">かかった時間</p>
+                        <p id="result-time" class="font-bold"></p>
+                    </div>
+                    <div class="bg-gray-100 p-3 sm:p-4 rounded-lg">
+                        <p class="text-base sm:text-lg text-gray-500">ペナルティ</p>
+                        <p id="result-penalty" class="font-bold text-red-500"></p>
+                    </div>
+                    <div class="bg-gray-100 p-3 sm:p-4 rounded-lg">
+                        <p class="text-base sm:text-lg text-gray-500">最終スコア</p>
+                        <p id="result-score" class="font-bold text-amber-500"></p>
+                    </div>
+                </div>
+
+                <div id="history-area" class="text-left max-h-40 sm:max-h-48 overflow-y-auto bg-gray-50 p-4 rounded-lg border">
+                     <h3 class="text-lg sm:text-xl font-bold text-center mb-4">もんだいのふりかえり</h3>
+                     <div id="history-table-body" class="text-sm sm:text-base"></div>
+                </div>
+
+                <button id="restart-button" class="w-full bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-10 rounded-lg text-2xl sm:text-3xl btn-3d">
                     もう一度挑戦する
                 </button>
             </div>
@@ -183,7 +196,7 @@
     </div>
 
     <script>
-        // DOM要素の取得
+        // DOM Elements
         const startScreen = document.getElementById('start-screen');
         const gameScreen = document.getElementById('game-screen');
         const resultScreen = document.getElementById('result-screen');
@@ -204,7 +217,7 @@
         const placeholderEl = document.getElementById('placeholder');
         const questionCountSelector = document.getElementById('question-count-selector');
 
-        // ゲーム状態変数
+        // Game State
         let correctCount = 0;
         let wrongCount = 0;
         let targetCorrectCount = 3;
@@ -213,7 +226,7 @@
         let history = [];
         let currentQuestion = {};
 
-        // Canvas設定
+        // Canvas
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
         let lastX = 0;
@@ -222,17 +235,18 @@
         function resizeCanvas() {
             const containerWidth = canvas.parentElement.clientWidth;
             canvas.width = containerWidth;
-            canvas.height = containerWidth / 2;
-            if (canvas.height > 250) canvas.height = 250;
-            ctx.strokeStyle = '#a0aec0';
-            ctx.lineWidth = 3;
+            canvas.height = containerWidth / 2.5;
+            if (canvas.height > 200) canvas.height = 200;
+            ctx.strokeStyle = '#4b5563';
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
         }
 
-        // --- イベントリスナー ---
+        // --- Event Listeners ---
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', () => {
+            stopConfetti();
             resultScreen.classList.add('hidden');
             startScreen.classList.remove('hidden');
         });
@@ -244,20 +258,19 @@
         });
 
         questionCountSelector.addEventListener('click', (e) => {
-            if (e.target.classList.contains('question-count-btn')) {
+            const button = e.target.closest('.question-count-btn');
+            if (button) {
                 document.querySelectorAll('.question-count-btn').forEach(btn => btn.classList.remove('selected'));
-                e.target.classList.add('selected');
-                targetCorrectCount = parseInt(e.target.dataset.count, 10);
+                button.classList.add('selected');
+                targetCorrectCount = parseInt(button.dataset.count, 10);
             }
         });
 
-        // Canvas描画イベント (PC)
+        // Canvas drawing events
         canvas.addEventListener('mousedown', (e) => startDrawing(e.offsetX, e.offsetY));
         canvas.addEventListener('mousemove', (e) => draw(e.offsetX, e.offsetY));
         canvas.addEventListener('mouseup', () => stopDrawing());
         canvas.addEventListener('mouseout', () => stopDrawing());
-
-        // Canvas描画イベント (モバイル)
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const rect = e.target.getBoundingClientRect();
@@ -269,16 +282,10 @@
             draw(e.targetTouches[0].clientX - rect.left, e.targetTouches[0].clientY - rect.top);
         });
         canvas.addEventListener('touchend', stopDrawing);
-
         window.addEventListener('resize', resizeCanvas);
 
-
-        // --- Canvas関数 ---
-        function startDrawing(x, y) {
-            isDrawing = true;
-            [lastX, lastY] = [x, y];
-        }
-
+        // --- Canvas Functions ---
+        function startDrawing(x, y) { isDrawing = true; [lastX, lastY] = [x, y]; }
         function draw(x, y) {
             if (!isDrawing) return;
             ctx.beginPath();
@@ -287,12 +294,9 @@
             ctx.stroke();
             [lastX, lastY] = [x, y];
         }
+        function stopDrawing() { isDrawing = false; }
 
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        // --- ゲームロジック ---
+        // --- Game Logic ---
         function startGame() {
             correctCount = 0;
             wrongCount = 0;
@@ -310,7 +314,6 @@
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 100);
             updateTimer();
-
             nextQuestion();
         }
 
@@ -321,74 +324,54 @@
 
         function generateFractions() {
             let num1, den1, num2, den2;
-
-            // 分母が同じにならないように生成
             do {
-                den1 = Math.floor(Math.random() * 9) + 2; // 2-10
-                den2 = Math.floor(Math.random() * 9) + 2; // 2-10
+                den1 = Math.floor(Math.random() * 9) + 2;
+                den2 = Math.floor(Math.random() * 9) + 2;
             } while (den1 === den2);
 
-            num1 = Math.floor(Math.random() * (den1 - 1)) + 1; // 分子は分母より小さい
+            num1 = Math.floor(Math.random() * (den1 - 1)) + 1;
             num2 = Math.floor(Math.random() * (den2 - 1)) + 1;
 
-            // 5%の確率で等しい分数を生成 (例: 1/2 と 3/6)
             if (Math.random() < 0.05) {
-                const multiplier = Math.floor(Math.random() * 3) + 2; // 2,3,4
+                const multiplier = Math.floor(Math.random() * 3) + 2;
                 num2 = num1 * multiplier;
                 den2 = den1 * multiplier;
             }
 
             const val1 = num1 / den1;
             const val2 = num2 / den2;
+            let answer = (Math.abs(val1 - val2) < 0.0001) ? '=' : (val1 < val2 ? '<' : '>');
 
-            let answer;
-            if (Math.abs(val1 - val2) < 0.0001) { // 浮動小数点誤差を考慮
-                answer = '=';
-            } else if (val1 < val2) {
-                answer = '<';
-            } else {
-                answer = '>';
-            }
-
-            return {
-                frac1: { num: num1, den: den1 },
-                frac2: { num: num2, den: den2 },
-                answer: answer
-            };
+            return { frac1: { num: num1, den: den1 }, frac2: { num: num2, den: den2 }, answer };
         }
 
         function nextQuestion() {
             currentQuestion = generateFractions();
-
             frac1El.innerHTML = `<span class="numerator">${currentQuestion.frac1.num}</span><span class="denominator">${currentQuestion.frac1.den}</span>`;
             frac2El.innerHTML = `<span class="numerator">${currentQuestion.frac2.num}</span><span class="denominator">${currentQuestion.frac2.den}</span>`;
             placeholderEl.textContent = '?';
-            placeholderEl.classList.remove('text-green-400', 'text-red-400');
-            placeholderEl.classList.add('text-cyan-400');
+            placeholderEl.classList.remove('text-green-500', 'text-red-500');
+            placeholderEl.classList.add('text-amber-500');
+            answerButtons.forEach(b => b.disabled = false);
         }
 
         function checkAnswer(userAnswer) {
+            answerButtons.forEach(b => b.disabled = true);
             const isCorrect = userAnswer === currentQuestion.answer;
 
-            history.push({
-                question: currentQuestion,
-                userAnswer: userAnswer,
-                isCorrect: isCorrect
-            });
+            history.push({ question: currentQuestion, userAnswer, isCorrect });
 
-            placeholderEl.textContent = isCorrect ? '✓' : '✗';
-            placeholderEl.classList.remove('text-cyan-400');
-            placeholderEl.classList.add(isCorrect ? 'text-green-400' : 'text-red-400');
+            placeholderEl.textContent = isCorrect ? '◯' : '✕';
+            placeholderEl.classList.remove('text-amber-500');
+            placeholderEl.classList.add(isCorrect ? 'text-green-500' : 'text-red-500');
 
-            if (isCorrect) {
-                correctCount++;
-                correctCountEl.textContent = correctCount;
-            } else {
-                wrongCount++;
-            }
+            if (isCorrect) correctCount++;
+            else wrongCount++;
+
+            correctCountEl.textContent = correctCount;
 
             if (correctCount >= targetCorrectCount) {
-                endGame();
+                setTimeout(endGame, 800);
             } else {
                 setTimeout(nextQuestion, 800);
             }
@@ -401,10 +384,11 @@
             const finalScore = elapsedTime + penalty;
 
             resultTimeEl.textContent = `${elapsedTime.toFixed(2)} 秒`;
-            resultPenaltyEl.textContent = `+ ${penalty.toFixed(2)} 秒 (${wrongCount}問)`;
+            resultPenaltyEl.textContent = `+ ${penalty.toFixed(2)} 秒 (${wrongCount}回)`;
             resultScoreEl.textContent = `${finalScore.toFixed(2)} 秒`;
 
             displayHistory();
+            startConfetti();
 
             gameScreen.classList.add('hidden');
             resultScreen.classList.remove('hidden');
@@ -414,24 +398,29 @@
             historyTableBodyEl.innerHTML = '';
             history.forEach((item, index) => {
                 const q = item.question;
+                const resultIcon = item.isCorrect ? '<span class="text-green-500 font-bold">正解</span>' : `<span class="text-red-500 font-bold">不正解 (正解: ${q.answer})</span>`;
                 const row = `
-                    <tr class="border-b border-gray-700 ${item.isCorrect ? 'bg-gray-800' : 'bg-red-900/30'}">
-                        <td class="px-4 py-2 font-medium">${index + 1}</td>
-                        <td class="px-4 py-2">${q.frac1.num}/${q.frac1.den} ? ${q.frac2.num}/${q.frac2.den}</td>
-                        <td class="px-4 py-2 font-bold ${item.isCorrect ? '' : 'text-red-400'}">
-                            ${item.userAnswer}
-                            ${!item.isCorrect ? `<span class="text-xs text-gray-400 ml-1">(正解: ${q.answer})</span>` : ''}
-                        </td>
-                        <td class="px-4 py-2 text-center text-xl">${item.isCorrect ? '✅' : '❌'}</td>
-                    </tr>
+                    <div class="border-b border-gray-200 py-2">
+                        <span class="font-bold">${index + 1}.</span> ${q.frac1.num}/${q.frac1.den} <span class="font-bold text-amber-600">${item.userAnswer}</span> ${q.frac2.num}/${q.frac2.den} &nbsp; ${resultIcon}
+                    </div>
                 `;
                 historyTableBodyEl.innerHTML += row;
             });
         }
+
+        // --- Confetti ---
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+        let animationFrameId;
+        function startConfetti(){if(!confettiCanvas)return;confettiCanvas.width=window.innerWidth;confettiCanvas.height=window.innerHeight;confettiParticles=[];for(let i=0;i<100;i++){confettiParticles.push(createParticle())}renderConfetti()}
+        function stopConfetti(){if(animationFrameId)cancelAnimationFrame(animationFrameId)}
+        function createParticle(){const colors=['#f9a8d4','#f472b6','#86efac','#34d399','#67e8f9','#22d3ee','#fcd34d','#fbbf24'];return{x:Math.random()*confettiCanvas.width,y:Math.random()*confettiCanvas.height-confettiCanvas.height,size:Math.random()*8+5,color:colors[Math.floor(Math.random()*colors.length)],speed:Math.random()*3+2,angle:Math.random()*360,spin:Math.random()<.5?-1:1}}
+        function renderConfetti(){if(!confettiCanvas)return;confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);confettiParticles.forEach((p,i)=>{p.y+=p.speed;p.angle+=p.spin*5;confettiCtx.save();confettiCtx.fillStyle=p.color;confettiCtx.translate(p.x+p.size/2,p.y+p.size/2);confettiCtx.rotate(p.angle*Math.PI/180);confettiCtx.fillRect(-p.size/2,-p.size/2,p.size,p.size);confettiCtx.restore();if(p.y>confettiCanvas.height){confettiParticles[i]=createParticle();confettiParticles[i].y=-10}});animationFrameId=requestAnimationFrame(renderConfetti)}
+
+        // Initial setup
+        resizeCanvas();
     </script>
 </body>
 </html>
-
-
-
 
