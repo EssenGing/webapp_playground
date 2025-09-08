@@ -8,13 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
     <style>
         html, body {
-            /* Prevent scrolling on touch devices like iPad */
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow-x: hidden; /* 横スクロールを禁止 */
         }
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+        #selection-screen {
+            /* 小さい画面でもコンテンツが収まるように高さを自動調整 */
+            min-height: 100vh;
+            height: auto;
         }
         #app-frame {
             width: 100%;
@@ -33,39 +37,39 @@
 <body class="bg-slate-100">
 
     <!-- App Selection Screen -->
-    <div id="selection-screen" class="min-h-screen flex flex-col items-center justify-center p-4">
-        <header class="text-center mb-10">
-            <h1 class="text-5xl font-extrabold text-indigo-600">学習アプリひろば</h1>
-            <p class="text-slate-500 mt-2 text-lg">あそびたいアプリをえらんでね！</p>
+    <div id="selection-screen" class="flex flex-col items-center justify-center p-4 sm:p-8">
+        <header class="text-center my-8 sm:my-12">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-600">学習アプリひろば</h1>
+            <p class="text-slate-500 mt-2 text-md sm:text-lg">あそびたいアプリをえらんでね！</p>
         </header>
 
-        <main class="grid md:grid-cols-3 gap-8 w-full max-w-6xl">
+        <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-6xl">
             <!-- App 1: Monster -->
-            <div class="app-card bg-white p-8 rounded-2xl shadow-lg text-center cursor-pointer" data-src="study_monster/study_monster.html">
-                <div class="text-6xl mb-4">👹</div>
-                <h2 class="text-2xl font-bold text-amber-600 mb-2">がんばれ！<br>モンスター討伐隊</h2>
-                <p class="text-slate-600 mb-6">クイズに答えてモンスターをやっつけよう！オリジナルの問題も作れるよ。</p>
-                <button class="play-button w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-lg text-xl">
+            <div class="app-card bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center cursor-pointer flex flex-col" data-src="study_monster/study_monster.html">
+                <div class="text-5xl sm:text-6xl mb-4">👹</div>
+                <h2 class="text-xl sm:text-2xl font-bold text-amber-600 mb-2">がんばれ！<br>モンスター討伐隊</h2>
+                <p class="text-slate-600 mb-6 text-sm sm:text-base flex-grow">クイズに答えてモンスターをやっつけよう！オリジナルの問題も作れるよ。</p>
+                <button class="play-button w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-lg text-lg sm:text-xl mt-auto">
                     プレイ
                 </button>
             </div>
 
             <!-- App 2: Divisor -->
-            <div class="app-card bg-white p-8 rounded-2xl shadow-lg text-center cursor-pointer" data-src="divisor_dash/divisor_dash.html">
-                <div class="text-6xl mb-4">⏱️</div>
-                <h2 class="text-2xl font-bold text-indigo-600 mb-2">約数<br>タイムアタック</h2>
-                <p class="text-slate-600 mb-6">お題の数の約数をすばやく見つけ出そう！タイムを競う数字ゲーム。</p>
-                 <button class="play-button w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-xl">
+            <div class="app-card bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center cursor-pointer flex flex-col" data-src="divisor_dash/divisor_dash.html">
+                <div class="text-5xl sm:text-6xl mb-4">⏱️</div>
+                <h2 class="text-xl sm:text-2xl font-bold text-indigo-600 mb-2">約数<br>タイムアタック</h2>
+                <p class="text-slate-600 mb-6 text-sm sm:text-base flex-grow">お題の数の約数をすばやく見つけ出そう！タイムを競う数字ゲーム。</p>
+                 <button class="play-button w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg sm:text-xl mt-auto">
                     プレイ
                 </button>
             </div>
 
             <!-- App 3: Fraction -->
-            <div class="app-card bg-white p-8 rounded-2xl shadow-lg text-center cursor-pointer" data-src="compare_frac/compare_frac.html">
-                <div class="text-6xl mb-4">➗</div>
-                <h2 class="text-2xl font-bold text-cyan-500 mb-2">分数大小比較<br>チャレンジ</h2>
-                <p class="text-slate-600 mb-6">2つの分数の大きさを比べよう！計算メモを使いながら挑戦できる。</p>
-                 <button class="play-button w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg text-xl">
+            <div class="app-card bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center cursor-pointer flex flex-col" data-src="compare_frac/compare_frac.html">
+                <div class="text-5xl sm:text-6xl mb-4">➗</div>
+                <h2 class="text-xl sm:text-2xl font-bold text-cyan-500 mb-2">分数大小比較<br>チャレンジ</h2>
+                <p class="text-slate-600 mb-6 text-sm sm:text-base flex-grow">2つの分数の大きさを比べよう！計算メモを使いながら挑戦できる。</p>
+                 <button class="play-button w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg text-lg sm:text-xl mt-auto">
                     プレイ
                 </button>
             </div>
@@ -109,3 +113,4 @@
 
 </body>
 </html>
+
