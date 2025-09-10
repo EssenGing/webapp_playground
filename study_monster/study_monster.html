@@ -9,16 +9,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
     <style>
+        /* Basic styles for preventing scroll and setting font */
         html, body {
-            /* Prevent scrolling on touch devices like iPad */
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+            /* remove height and overflow to allow scrolling on small screens */
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%; /* Prevent font size adjustment on iOS */
         }
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
-            touch-action: manipulation;
+            touch-action: manipulation; /* Disable double-tap to zoom */
         }
+        /* 3D button effect styles */
         .btn-3d {
             transition: all 0.1s ease-out;
             box-shadow: 0 6px 0 #a3a3a3;
@@ -33,6 +35,7 @@
             background-color: #d1d5db;
             cursor: not-allowed;
         }
+        /* Animation keyframes */
         @keyframes spawn {
             0% { transform: scale(0.5) translateY(50px); opacity: 0; }
             70% { transform: scale(1.1) translateY(0); opacity: 1; }
@@ -62,9 +65,12 @@
             75% { transform: scale(1.05) rotate(2deg); }
         }
         .animate-gameover { animation: gameover-text 0.5s ease-in-out; }
+
+        /* Utility class for canvas */
         .touch-none {
             touch-action: none;
         }
+        /* Category tab styles */
         .category-tab {
             transition: all 0.2s ease-in-out;
         }
@@ -76,111 +82,119 @@
     </style>
 </head>
 <body class="bg-yellow-50 text-gray-800 flex items-center justify-center min-h-screen">
-    <div id="app-container" class="w-full max-w-5xl mx-auto p-4 text-center">
+    <div id="app-container" class="w-full max-w-5xl mx-auto p-2 sm:p-4 text-center">
 
-        <!-- デッキ選択画面 -->
-        <div id="deck-selection-screen" class="space-y-6">
-            <h1 class="text-5xl font-extrabold text-amber-600">がんばれ！<br>モンスター討伐隊</h1>
-            <div class="bg-white p-8 rounded-2xl shadow-lg">
-                <h2 class="text-3xl font-bold mb-6">どのデッキでたたかう？</h2>
+        <!-- Deck Selection Screen -->
+        <div id="deck-selection-screen" class="space-y-4 sm:space-y-6">
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-amber-600">がんばれ！<br>モンスター討伐隊</h1>
+            <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
+                <h2 class="text-xl sm:text-3xl font-bold mb-4 sm:mb-6">どのデッキでたたかう？</h2>
                 <div id="deck-category-tabs" class="flex flex-wrap justify-center gap-2 mb-6"></div>
-                <div id="deck-list" class="space-y-4 mb-6 max-h-72 overflow-y-auto"></div>
-                <button id="new-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 w-full rounded-lg text-2xl btn-3d">+ あたらしいデッキをつくる</button>
-                <p class="text-sm text-gray-500 mt-6">効果音：OtoLogic</p>
+                <div id="deck-list" class="space-y-4 mb-6 max-h-60 sm:max-h-72 overflow-y-auto"></div>
+                <button id="new-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-5 sm:py-4 sm:px-6 w-full rounded-lg text-lg sm:text-2xl btn-3d">+ あたらしいデッキをつくる</button>
+                <p class="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">効果音：OtoLogic</p>
             </div>
         </div>
 
-        <!-- デッキ編集画面 -->
+        <!-- Deck Editor Screen -->
         <div id="deck-editor-screen" class="hidden space-y-4">
-            <h2 class="text-4xl font-bold text-amber-600">デッキのへんしゅう</h2>
-            <div class="bg-white p-8 rounded-2xl shadow-lg text-left">
-                <div class="mb-6">
-                    <label for="deck-name" class="font-bold text-xl">デッキのなまえ</label>
-                    <input type="text" id="deck-name" class="w-full text-xl p-3 border rounded mt-2" placeholder="例：かんじテスト">
+            <h2 class="text-2xl sm:text-4xl font-bold text-amber-600">デッキのへんしゅう</h2>
+            <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg text-left">
+                <div class="mb-4 sm:mb-6">
+                    <label for="deck-name" class="font-bold text-lg sm:text-xl">デッキのなまえ</label>
+                    <input type="text" id="deck-name" class="w-full text-lg sm:text-xl p-2 sm:p-3 border rounded mt-2" placeholder="例：かんじテスト">
                 </div>
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-xl">もんだいリスト</h3>
+                    <h3 class="font-bold text-lg sm:text-xl">もんだいリスト</h3>
                 </div>
-                <div id="questions-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto p-4 bg-gray-50 rounded min-h-[100px]"></div>
-                <div class="border-t pt-6">
-                    <h3 class="font-bold text-xl mb-4">あたらしいもんだい</h3>
+                <div id="questions-list" class="space-y-2 mb-4 max-h-48 sm:max-h-60 overflow-y-auto p-2 sm:p-4 bg-gray-50 rounded min-h-[100px]"></div>
+                <div class="border-t pt-4 sm:pt-6">
+                    <h3 class="font-bold text-lg sm:text-xl mb-4">あたらしいもんだい</h3>
                     <div class="mb-4">
-                         <label for="new-question" class="text-lg">もんだい</label>
-                         <textarea id="new-question" rows="2" class="w-full p-3 border rounded mt-1 text-lg" placeholder="例：日本の首都は？"></textarea>
+                         <label for="new-question" class="text-base sm:text-lg">もんだい</label>
+                         <textarea id="new-question" rows="2" class="w-full p-2 sm:p-3 border rounded mt-1 text-base sm:text-lg" placeholder="例：日本の首都は？"></textarea>
                     </div>
                     <div class="mb-4">
-                        <label for="new-answer" class="text-lg">こたえ</label>
-                        <input type="text" id="new-answer" class="w-full p-3 border rounded mt-1 text-lg" placeholder="例：東京">
+                        <label for="new-answer" class="text-base sm:text-lg">こたえ</label>
+                        <input type="text" id="new-answer" class="w-full p-2 sm:p-3 border rounded mt-1 text-base sm:text-lg" placeholder="例：東京">
                     </div>
-                    <button id="add-question-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg btn-3d text-xl">もんだいをついか</button>
+                    <button id="add-question-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg btn-3d text-lg sm:text-xl">もんだいをついか</button>
                 </div>
             </div>
-             <div class="grid grid-cols-2 gap-6 mt-6">
-                 <button id="save-deck-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-lg text-2xl btn-3d">このデッキをほぞん</button>
-                 <button id="back-to-selection-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 rounded-lg text-2xl btn-3d">もどる</button>
+             <div class="grid grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
+                 <button id="save-deck-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d">ほぞん</button>
+                 <button id="back-to-selection-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d">もどる</button>
             </div>
         </div>
 
-        <!-- 問題数選択画面 -->
-        <div id="setup-screen" class="hidden space-y-6">
-            <h1 id="setup-title" class="text-4xl font-extrabold text-amber-600"></h1>
-            <div class="bg-white p-8 rounded-2xl shadow-lg">
-                <h2 class="text-3xl font-bold mb-6">なんびき とうばつする？</h2>
+        <!-- Number of Questions Selection Screen -->
+        <div id="setup-screen" class="hidden space-y-4 sm:space-y-6">
+            <h1 id="setup-title" class="text-2xl sm:text-4xl font-extrabold text-amber-600"></h1>
+            <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
+                <h2 class="text-xl sm:text-3xl font-bold mb-6">なんびき とうばつする？</h2>
                 <div id="question-count-buttons" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
-                 <button id="back-to-decks-btn" class="mt-6 w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 rounded-lg text-2xl btn-3d">デッキをえらびなおす</button>
+                 <button id="back-to-decks-btn" class="mt-6 w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d">デッキをえらびなおす</button>
             </div>
         </div>
 
-        <!-- メイン画面 -->
+        <!-- Main Game Screen -->
         <div id="main-screen" class="hidden">
-            <div class="bg-white p-8 rounded-2xl shadow-lg relative">
-                 <div id="game-buttons" class="absolute top-6 right-6 flex flex-col space-y-4">
-                    <button id="correct-btn" class="bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 px-6 rounded-xl text-2xl btn-3d">せいかい！</button>
-                    <button id="retry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-4 px-6 rounded-xl text-2xl btn-3d">解き直し</button>
-                </div>
-                <div class="flex justify-between items-center mb-4 pr-48">
-                    <h2 id="monster-title" class="text-3xl font-bold text-amber-600"></h2>
-                    <p id="counter" class="text-2xl font-bold bg-gray-200 px-6 py-2 rounded-full"></p>
+            <!-- Adjusted paddings, margins, heights, and font sizes for better mobile view -->
+            <div class="bg-white p-3 sm:p-6 rounded-2xl shadow-lg relative">
+                <!-- NEW: Top section layout updated to prevent button overlap -->
+                <div class="flex justify-between items-start gap-4 mb-3">
+                    <!-- Left part with title, counter, timer -->
+                    <div class="flex-1">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                            <h2 id="monster-title" class="text-lg sm:text-2xl md:text-3xl font-bold text-amber-600 order-2 sm:order-1 mt-2 sm:mt-0"></h2>
+                            <p id="counter" class="text-sm sm:text-xl font-bold bg-gray-200 px-3 py-1 sm:px-5 sm:py-2 rounded-full order-1 sm:order-2 self-end sm:self-center"></p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 sm:h-4">
+                            <div id="timer-bar" class="bg-gradient-to-r from-yellow-400 to-red-500 h-3 sm:h-4 rounded-full" style="width: 100%; transition: width 1s linear;"></div>
+                        </div>
+                    </div>
+                    <!-- Right part with buttons -->
+                    <div id="game-buttons" class="flex flex-col space-y-3">
+                        <button id="correct-btn" class="bg-green-500 hover:bg-green-600 text-white font-extrabold py-2 px-4 sm:py-3 sm:px-5 rounded-xl text-base sm:text-xl btn-3d">せいかい！</button>
+                        <button id="retry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-2 px-4 sm:py-3 sm:px-5 rounded-xl text-base sm:text-xl btn-3d">解き直し</button>
+                    </div>
                 </div>
 
-                <div class="w-full bg-gray-200 rounded-full h-5 mb-4">
-                    <div id="timer-bar" class="bg-gradient-to-r from-yellow-400 to-red-500 h-5 rounded-full" style="width: 100%; transition: width 1s linear;"></div>
+                <div id="lives-area" class="flex justify-center gap-2 sm:gap-3 text-2xl sm:text-3xl mb-3"></div>
+                <div class="bg-gray-100 p-2 sm:p-4 rounded-lg my-3 sm:my-4 min-h-[80px] sm:min-h-[120px] flex flex-col justify-center">
+                    <div id="question-display" class="text-xl sm:text-3xl font-bold"></div>
                 </div>
 
-                <div id="lives-area" class="flex justify-center gap-3 text-4xl mb-4"></div>
-                <div class="bg-gray-100 p-6 rounded-lg my-6 min-h-[150px] flex flex-col justify-center">
-                    <div id="question-display" class="text-4xl font-bold mb-2"></div>
-                </div>
+                <!-- UPDATED: Monster area height for responsive monster size -->
+                <div id="monster-area" class="h-36 sm:h-48 flex items-center justify-center"></div>
 
-                <div id="monster-area" class="h-48 flex items-center justify-center"></div>
-
-                <div class="my-6">
-                    <label class="font-bold text-left block mb-3 text-gray-600 text-xl">こたえをかいてみよう！</label>
-                    <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-64 cursor-crosshair touch-none"></canvas>
-                    <button id="clear-canvas-btn" class="mt-4 w-1/3 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg btn-3d text-xl">けす</button>
+                <div class="my-3 sm:my-4">
+                    <label class="font-bold text-left block mb-2 text-gray-600 text-base sm:text-lg">こたえをかいてみよう！</label>
+                    <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-36 sm:h-56 cursor-crosshair touch-none"></canvas>
+                    <button id="clear-canvas-btn" class="mt-3 w-full sm:w-1/2 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 rounded-lg btn-3d text-base sm:text-lg">けす</button>
                 </div>
             </div>
         </div>
 
-        <!-- クリア画面 -->
+        <!-- Clear Screen -->
         <div id="clear-screen" class="hidden">
             <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
-            <div class="bg-white p-12 rounded-2xl shadow-2xl space-y-6">
-                <h1 class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-celebrate">ぜんぶ やっつけた！<br>おめでとう！</h1>
-                <p class="text-9xl">🏆✨🎉</p>
-                <div id="clear-results-area" class="text-left max-h-60 overflow-y-auto bg-gray-50 p-6 rounded-lg border"></div>
-                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-10 rounded-lg text-3xl btn-3d">もういっかい</button>
+            <div class="bg-white p-6 sm:p-12 rounded-2xl shadow-2xl space-y-4 sm:space-y-6">
+                <h1 class="text-3xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-celebrate">ぜんぶ やっつけた！<br>おめでとう！</h1>
+                <p class="text-7xl sm:text-9xl">🏆✨🎉</p>
+                <div id="clear-results-area" class="text-left max-h-40 sm:max-h-60 overflow-y-auto bg-gray-50 p-4 sm:p-6 rounded-lg border"></div>
+                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-3 px-8 sm:py-5 sm:px-10 rounded-lg text-xl sm:text-3xl btn-3d">もういっかい</button>
             </div>
         </div>
 
-        <!-- ゲームオーバー画面 -->
+        <!-- Game Over Screen -->
         <div id="gameover-screen" class="hidden">
-            <div class="bg-gray-800 p-12 rounded-2xl shadow-2xl space-y-6 text-white">
-                <h1 class="text-6xl font-extrabold text-red-500 animate-gameover">ゲームオーバー</h1>
-                <p class="text-9xl">😭</p>
-                <p class="text-2xl">ざんねん…<br>またちょうせんしてね！</p>
-                <div id="gameover-results-area" class="text-left max-h-60 overflow-y-auto bg-gray-700 p-6 rounded-lg border border-gray-600"></div>
-                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 font-bold py-5 px-10 rounded-lg text-3xl btn-3d">もういっかい</button>
+            <div class="bg-gray-800 p-6 sm:p-12 rounded-2xl shadow-2xl space-y-4 sm:space-y-6 text-white">
+                <h1 class="text-3xl sm:text-6xl font-extrabold text-red-500 animate-gameover">ゲームオーバー</h1>
+                <p class="text-7xl sm:text-9xl">😭</p>
+                <p class="text-lg sm:text-2xl">ざんねん…<br>またちょうせんしてね！</p>
+                <div id="gameover-results-area" class="text-left max-h-40 sm:max-h-60 overflow-y-auto bg-gray-700 p-4 sm:p-6 rounded-lg border border-gray-600"></div>
+                <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 font-bold py-3 px-8 sm:py-5 sm:px-10 rounded-lg text-xl sm:text-3xl btn-3d">もういっかい</button>
             </div>
         </div>
 
@@ -188,7 +202,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- DOM要素 ---
+        // --- DOM Elements ---
         const screens = {
             deckSelection: document.getElementById('deck-selection-screen'),
             deckEditor: document.getElementById('deck-editor-screen'),
@@ -221,7 +235,7 @@
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const timerBar = document.getElementById('timer-bar');
 
-        // --- デフォルトデッキ ---
+        // --- Default Decks ---
         const defaultDecks = [
             { name: '1年生のかんじ', category: '小学1年生', isDefault: true, questions: [{q:"山", a:"やま"}, {q:"川", a:"かわ"}, {q:"日", a:"ひ"}, {q:"月", a:"つき"}, {q:"木", a:"き"}] },
             { name: '2年生のかんじ', category: '小学2年生', isDefault: true, questions: [{q:"時", a:"とき"}, {q:"曜", a:"よう"}, {q:"週", a:"しゅう"}, {q:"春", a:"はる"}, {q:"夏", a:"なつ"}] },
@@ -232,7 +246,7 @@
             { name: 'どうぶつクイズ', category: 'その他', isDefault: true, questions: [{q:"世界で一番大きな動物は？", a:"シロナガスクジラ"}, {q:"首が一番長い動物は？", a:"キリン"}, {q:"鼻が長い動物は？", a:"ゾウ"}] },
         ];
 
-        // --- ゲーム状態 ---
+        // --- Game State ---
         let allDecks = [];
         let currentDeckIndex = -1;
         let currentQuestions = [];
@@ -246,7 +260,7 @@
         const TIME_LIMIT = 15;
         let selectedCategory = '小学1年生';
 
-        // --- モンスター ---
+        // --- Monster Data ---
         const MONSTERS = [
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhXNTz9LqGn-dTyacBt2n0JiCetzrkETOcF1neofXOypU1Zsb9afUTiMRm_G71xMuiuUH7WQKV8or5nhAARuDmTh7mp31wAh5mckUaUgTU3D_Hzz7hjDRsddYUWpXWrSdYrozHOj9heLMw/s170/monster01.png', emoji: '🌱' },
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhcGlFVplWQL65fn-lrtazTQL6rvrthKW6gtO2EeHeeNDEP2nJtpdUhDLzsT60ucQ25WT3KYA7Iw2p0Ji9Kn1RvnmTWhVqc8XbvTIFUu9P6zabvrX4r78cSjnxhhWELWL7piPX4rUeSdnI/s170/monster02.png', emoji: '👨‍' },
@@ -260,7 +274,6 @@
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjpni__YcXjSExJ6M74waXyzQKDw0zMwi0SZ0yl-0PAPALq2DO4sKlLcfR0Io8fkyFRRhzLPnp2NftJrthjbnmtSmJVoJNQ5pjHFM_zeYNmJsgYJIgVkzHFkgyMHlhr3uPt-ZZEqAysYCc/s170/monster10.png', emoji: '👹' },
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhdW2bw5XFelBMMNMSx4_PST670AxRputfVYU_24fkGYmNeXerrd48CYIgE70vrT711Lwa5Xlgk1DqRSGjxfTZgpq26ky_TV5BazG_rhuMGufQgFFTBJE30qt04EHrTMRe2FqemO0Bk-bM/s170/monster11.png', emoji: '👹' },
             { name: 'モンスター', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg_aBArC2jvlxaDm_rW1HV2niXtxb9MAhuwFIZSIvGrQDAEci0DQBimJKE56oxhb49c2EiDaf16YNWVlUIw_OBcdbltm4JN0DP2CazcRJqsdNnAs4gxK2wSvTC6x8qkcqoN4OwQ2tVy7KI/s170/monster12.png', emoji: '👹' },
-
         ];
         const BOSS_MONSTER = { name: 'ドラゴン', image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhWsvL0brkhZn9zU4BpyeOuPORRguZz4iPTopr4phHynEW0DATC9W5j11fWGDlghx_Eysn_5gGSLuBYybC28GRYzsPZB_qpNjFU8qMGpgL_fEi5iUfZv4GnEn_v-sI80WTqOPbSqrg1-3c/s180-c/fantasy_dragon.png', emoji: '🐉' };
 
@@ -270,19 +283,19 @@
         let lastX = 0;
         let lastY = 0;
 
-        // --- サウンド ---
+        // --- Sound Effects ---
         function playSound(type) {
             const sound = new Audio(type === 'correct' ? 'sounds/correct.mp3' : 'sounds/incorrect.mp3');
             sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
         }
 
-        // --- 画面切り替え ---
+        // --- Screen Management ---
         function showScreen(screenId) {
             Object.values(screens).forEach(screen => screen.classList.add('hidden'));
             screens[screenId].classList.remove('hidden');
         }
 
-        // --- デッキ管理 ---
+        // --- Deck Management ---
         function loadAndCombineDecks() {
             const userDecks = JSON.parse(localStorage.getItem('monsterDecks')) || [];
             allDecks = [...defaultDecks, ...userDecks];
@@ -294,15 +307,13 @@
         }
 
         function renderDeckSelectionScreen() {
-            // カテゴリタブの描画
             const categories = ['小学1年生', '小学2年生', '小学3年生', '小学4年生', '小学5年生', '小学6年生', 'その他', 'じぶんのデッキ'];
             deckCategoryTabs.innerHTML = categories.map(cat => `
-                <button data-category="${cat}" class="category-tab px-4 py-2 rounded-lg font-bold bg-gray-200 hover:bg-cyan-300 ${selectedCategory === cat ? 'active' : ''}">
+                <button data-category="${cat}" class="category-tab px-3 py-2 text-sm sm:text-base sm:px-4 rounded-lg font-bold bg-gray-200 hover:bg-cyan-300 ${selectedCategory === cat ? 'active' : ''}">
                     ${cat}
                 </button>
             `).join('');
 
-            // デッキリストの描画
             let decksToDisplay;
             if (selectedCategory === 'じぶんのデッキ') {
                 decksToDisplay = allDecks.filter(deck => !deck.isDefault);
@@ -312,23 +323,23 @@
 
             deckList.innerHTML = '';
             if (decksToDisplay.length === 0) {
-                deckList.innerHTML = `<p class="text-gray-500 text-xl">${selectedCategory === 'じぶんのデッキ' ? 'まだデッキがありません。<br>あたらしいデッキをつくろう！' : 'このカテゴリのデッキはありません。'}</p>`;
+                deckList.innerHTML = `<p class="text-gray-500 text-base sm:text-xl">${selectedCategory === 'じぶんのデッキ' ? 'まだデッキがありません。<br>あたらしいデッキをつくろう！' : 'このカテゴリのデッキはありません。'}</p>`;
             } else {
                 decksToDisplay.forEach(deck => {
                     const originalIndex = allDecks.indexOf(deck);
                     const deckEl = document.createElement('div');
-                    deckEl.className = 'flex items-center gap-4';
+                    deckEl.className = 'flex items-center gap-2 sm:gap-4';
                     deckEl.innerHTML = `
-                        <button data-index="${originalIndex}" class="start-game-btn flex-grow bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 px-6 rounded-lg text-2xl btn-3d">${deck.name} (${deck.questions.length}もん)</button>
-                        <button data-index="${originalIndex}" class="edit-deck-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold p-4 rounded-lg btn-3d text-2xl">✏️</button>
-                        ${!deck.isDefault ? `<button data-index="${originalIndex}" class="delete-deck-btn bg-red-500 hover:bg-red-600 text-white font-bold p-4 rounded-lg btn-3d text-2xl">🗑️</button>` : ''}
+                        <button data-index="${originalIndex}" class="start-game-btn flex-grow bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-3 px-4 sm:py-4 sm:px-6 rounded-lg text-base sm:text-2xl btn-3d">${deck.name} (${deck.questions.length}もん)</button>
+                        <button data-index="${originalIndex}" class="edit-deck-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold p-3 sm:p-4 rounded-lg btn-3d text-lg sm:text-2xl">✏️</button>
+                        ${!deck.isDefault ? `<button data-index="${originalIndex}" class="delete-deck-btn bg-red-500 hover:bg-red-600 text-white font-bold p-3 sm:p-4 rounded-lg btn-3d text-lg sm:text-2xl">🗑️</button>` : ''}
                     `;
                     deckList.appendChild(deckEl);
                 });
             }
         }
 
-        // --- デッキ編集画面の処理 ---
+        // --- Deck Editor ---
         let tempQuestions = [];
         function openDeckEditor(index = -1) {
             if (index === -1) { // New Deck
@@ -339,10 +350,10 @@
                 const deck = allDecks[index];
                 if (deck.isDefault) {
                     deckNameInput.value = deck.name + 'のコピー';
-                    currentDeckIndex = -1; // Treat as new deck on save
+                    currentDeckIndex = -1; // Treat as new deck
                 } else {
                     deckNameInput.value = deck.name;
-                    currentDeckIndex = index; // The index in allDecks to overwrite
+                    currentDeckIndex = index;
                 }
                 tempQuestions = JSON.parse(JSON.stringify(deck.questions));
             }
@@ -353,20 +364,20 @@
         function renderQuestionsList() {
             questionsList.innerHTML = '';
             if(tempQuestions.length === 0) {
-                questionsList.innerHTML = `<p class="text-gray-400 text-center p-4 text-lg">まだ問題がありません</p>`;
+                questionsList.innerHTML = `<p class="text-gray-400 text-center p-4 text-base sm:text-lg">まだ問題がありません</p>`;
             }
             tempQuestions.forEach((q, index) => {
                 const qEl = document.createElement('div');
-                qEl.className = 'bg-white p-3 border rounded flex justify-between items-center text-lg';
+                qEl.className = 'bg-white p-2 sm:p-3 border rounded flex justify-between items-center text-sm sm:text-lg';
                 qEl.innerHTML = `
                     <span class="truncate pr-2"><b>Q:</b> ${q.q} / <b>A:</b> ${q.a}</span>
-                    <button data-index="${index}" class="delete-question-btn bg-red-500 text-white rounded px-3 py-1 text-base">さくじょ</button>
+                    <button data-index="${index}" class="delete-question-btn bg-red-500 text-white rounded px-2 py-1 text-xs sm:text-base">さくじょ</button>
                 `;
                 questionsList.appendChild(qEl);
             });
         }
 
-        // --- ゲーム開始準備 ---
+        // --- Game Setup ---
         function showSetupScreen(deckIndex) {
             currentDeckIndex = deckIndex;
             const deck = allDecks[deckIndex];
@@ -375,18 +386,18 @@
             const counts = [5, 10, 15, 20];
             counts.forEach(count => {
                  if(deck.questions.length >= count) {
-                     questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-4 rounded-lg text-2xl btn-3d">${count}ひき</button>`;
+                     questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">${count}ひき</button>`;
                  }
             });
             if (deck.questions.length > 0) {
-                 questionCountButtons.innerHTML += `<button data-questions="${deck.questions.length}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-5 px-4 rounded-lg text-2xl btn-3d">ぜんぶ(${deck.questions.length}ひき)</button>`;
+                 questionCountButtons.innerHTML += `<button data-questions="${deck.questions.length}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">ぜんぶ(${deck.questions.length}ひき)</button>`;
             } else {
-                 questionCountButtons.innerHTML = `<p class="text-gray-500 col-span-2 lg:col-span-4 text-xl">問題がありません。<br>デッキを編集してください。</p>`
+                 questionCountButtons.innerHTML = `<p class="text-gray-500 col-span-2 lg:col-span-4 text-lg sm:text-xl">問題がありません。<br>デッキを編集してください。</p>`
             }
             showScreen('setup');
         }
 
-        // --- ゲーム本体 ---
+        // --- Core Game Logic ---
         function startGame(numQuestions) {
             totalMonsters = numQuestions;
             defeatedMonsters = 0;
@@ -415,12 +426,10 @@
 
         function displayQuestion() {
             clearCanvas();
-
             if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= totalMonsters) {
                  showClearScreen();
                 return;
             }
-
             const qa = currentQuestions[currentQuestionIndex];
             questionDisplay.innerHTML = `<b>もんだい：</b> ${qa.q}`;
             buttonsDisabled = false;
@@ -430,15 +439,19 @@
         function spawnMonster() {
             monsterArea.innerHTML = '';
             let monster;
-            let monsterSize = 'w-60 h-60';
+            // UPDATED: Monster size is now responsive and different for the boss
+            let monsterSize;
 
             if (defeatedMonsters === totalMonsters - 1) {
                 monster = BOSS_MONSTER;
                 monsterTitle.textContent = `ついに${monster.name}があらわれた！`;
-                monsterSize = 'w-60 h-60';
+                // Boss monster size
+                monsterSize = 'w-36 h-36 sm:w-48 sm:h-48';
             } else {
                 monster = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
                 monsterTitle.textContent = `${monster.name}があらわれた！`;
+                // Regular monster size
+                monsterSize = 'w-32 h-32 sm:w-44 sm:h-44';
             }
 
             const monsterEl = document.createElement('div');
@@ -446,21 +459,10 @@
 
             const img = document.createElement('img');
             img.src = monster.image;
-            img.className = 'w-full h-full object-contain rounded-lg';
+            img.className = 'w-full h-full object-contain';
             img.alt = monster.name;
 
-            const fallbackEl = document.createElement('div');
-            fallbackEl.textContent = monster.emoji;
-            fallbackEl.className = 'text-8xl';
-            fallbackEl.style.display = 'none';
-
-            img.onerror = () => {
-                img.style.display = 'none';
-                fallbackEl.style.display = 'block';
-            };
-
             monsterEl.appendChild(img);
-            monsterEl.appendChild(fallbackEl);
             monsterArea.appendChild(monsterEl);
         }
 
@@ -477,12 +479,9 @@
             if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
             buttonsDisabled = true;
             playSound('correct');
-
             currentQuestions[currentQuestionIndex].result = 'correct';
             const monsterEl = monsterArea.querySelector('div');
-
             monsterEl?.classList.add('animate-defeat');
-
             monsterEl?.addEventListener('animationend', () => {
                 defeatedMonsters++;
                 currentQuestionIndex++;
@@ -497,13 +496,11 @@
         function handleRetry() {
             if (buttonsDisabled) return;
             playSound('incorrect');
-
             const monsterEl = monsterArea.querySelector('div');
             monsterEl?.classList.add('animate-shake');
             monsterEl?.addEventListener('animationend', () => {
                 monsterEl.classList.remove('animate-shake');
             }, { once: true });
-
             clearCanvas();
         }
 
@@ -524,7 +521,6 @@
 
             const monsterEl = monsterArea.querySelector('div');
             monsterEl?.classList.add('animate-shake');
-
             monsterEl?.addEventListener('animationend', () => {
                 monsterEl.classList.remove('animate-shake');
                 currentQuestionIndex++;
@@ -536,20 +532,16 @@
             }, { once: true });
         }
 
-
-        // --- タイマー機能 ---
+        // --- Timer ---
         function startTimer() {
             stopTimer();
             let timeLeft = TIME_LIMIT;
             timerBar.style.transition = 'width 1s linear';
-
             const updateTimerDisplay = () => {
                 const percentage = (timeLeft / TIME_LIMIT) * 100;
                 timerBar.style.width = `${percentage}%`;
             };
-
             updateTimerDisplay();
-
             questionTimer = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay();
@@ -560,21 +552,19 @@
         }
 
         function stopTimer() {
-            if (questionTimer) {
-                clearInterval(questionTimer);
-                questionTimer = null;
-            }
+            clearInterval(questionTimer);
+            questionTimer = null;
             timerBar.style.transition = 'none';
         }
 
-        // --- Canvas描画 ---
+        // --- Canvas Drawing ---
         function initializeCanvas() {
             if(!canvasCtx) canvasCtx = handwritingCanvas.getContext('2d');
             const { width, height } = handwritingCanvas.getBoundingClientRect();
             handwritingCanvas.width = width;
             handwritingCanvas.height = height;
             canvasCtx.strokeStyle = '#374151';
-            canvasCtx.lineWidth = 5;
+            canvasCtx.lineWidth = Math.max(2, width / 100); // Responsive line width
             canvasCtx.lineJoin = 'round';
             canvasCtx.lineCap = 'round';
             clearCanvas();
@@ -606,21 +596,19 @@
         }
         function stopDrawing() { isDrawing = false; }
 
+        // --- Result Screens ---
         function renderResults(containerId) {
             const container = document.getElementById(containerId);
-            container.innerHTML = '<h3 class="text-2xl font-bold mb-4 text-center">もんだいとこたえ</h3>';
+            container.innerHTML = `<h3 class="text-xl sm:text-2xl font-bold mb-4 text-center">もんだいとこたえ</h3>`;
             const list = document.createElement('ul');
-            list.className = 'space-y-4';
+            list.className = 'space-y-3';
             const answeredQuestions = currentQuestions.filter(q => q.result);
             answeredQuestions.forEach(qa => {
                 const item = document.createElement('li');
-                item.className = 'border-b border-gray-400 pb-3 text-lg';
-                let resultHTML = '';
-                if (qa.result === 'correct') {
-                    resultHTML = `<span class="font-bold text-green-500 mr-2">[せいかい！]</span>`;
-                } else if (qa.result === 'incorrect') {
-                    resultHTML = `<span class="font-bold text-red-500 mr-2">[ふせいかい…]</span>`;
-                }
+                item.className = 'border-b border-gray-400 pb-2 text-sm sm:text-lg';
+                let resultHTML = qa.result === 'correct'
+                    ? `<span class="font-bold text-green-500 mr-2">[せいかい！]</span>`
+                    : `<span class="font-bold text-red-500 mr-2">[ふせいかい…]</span>`;
                 item.innerHTML = `<div>${resultHTML}<b>Q:</b> ${qa.q}</div><div class="pl-6"><b class="${containerId.includes('clear') ? 'text-blue-600' : 'text-cyan-400'}">A:</b> ${qa.a}</div>`;
                 list.appendChild(item);
             });
@@ -641,7 +629,7 @@
             renderResults('gameover-results-area');
         }
 
-        // --- イベントリスナー ---
+        // --- Event Listeners ---
         deckCategoryTabs.addEventListener('click', e => {
             const target = e.target.closest('button');
             if (target && target.dataset.category) {
@@ -692,12 +680,9 @@
 
         saveDeckBtn.addEventListener('click', () => {
             const name = deckNameInput.value.trim();
-            if (!name) {
-                alert('デッキのなまえをいれてください。');
-                return;
-            }
-            const newDeck = { name, questions: tempQuestions, isDefault: false };
-            if (currentDeckIndex === -1) {
+            if (!name) { alert('デッキのなまえをいれてください。'); return; }
+            const newDeck = { name, questions: tempQuestions, isDefault: false, category: 'じぶんのデッキ' };
+            if (currentDeckIndex === -1 || allDecks[currentDeckIndex]?.isDefault) {
                 allDecks.push(newDeck);
             } else {
                 allDecks[currentDeckIndex] = newDeck;
@@ -744,7 +729,7 @@
         clearCanvasBtn.addEventListener('click', clearCanvas);
         window.addEventListener('resize', initializeCanvas);
 
-        // --- 初期化 ---
+        // --- App Initialization ---
         function initApp() {
             loadAndCombineDecks();
             renderDeckSelectionScreen();
@@ -752,11 +737,11 @@
         }
         initApp();
 
-        // --- 紙吹雪 (省略、変更なし) ---
+        // --- Confetti Effect ---
         const canvas = document.getElementById('confetti-canvas');
         const ctx = canvas.getContext('2d');
         let confettiParticles = []; let animationFrameId;
-        function startConfetti(){if(!canvas)return;canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;confettiParticles=[];for(let i=0;i<100;i++){confettiParticles.push(createParticle())}renderConfetti()}
+        function startConfetti(){if(!canvas)return;canvas.width=window.innerWidth;canvas.height=window.innerHeight;confettiParticles=[];for(let i=0;i<100;i++){confettiParticles.push(createParticle())}renderConfetti()}
         function stopConfetti(){if(animationFrameId)cancelAnimationFrame(animationFrameId)}
         function createParticle(){const colors=['#f9a8d4','#f472b6','#86efac','#34d399','#67e8f9','#22d3ee','#fcd34d','#fbbf24'];return{x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,size:Math.random()*8+5,color:colors[Math.floor(Math.random()*colors.length)],speed:Math.random()*3+2,angle:Math.random()*360,spin:Math.random()<.5?-1:1}}
         function renderConfetti(){if(!canvas)return;ctx.clearRect(0,0,canvas.width,canvas.height);confettiParticles.forEach((p,i)=>{p.y+=p.speed;p.angle+=p.spin*5;ctx.save();ctx.fillStyle=p.color;ctx.translate(p.x+p.size/2,p.y+p.size/2);ctx.rotate(p.angle*Math.PI/180);ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);ctx.restore();if(p.y>canvas.height){confettiParticles[i]=createParticle();confettiParticles[i].y=-10}});animationFrameId=requestAnimationFrame(renderConfetti)}
@@ -764,4 +749,3 @@
     </script>
 </body>
 </html>
-
