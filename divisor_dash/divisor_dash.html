@@ -17,6 +17,12 @@
             touch-action: manipulation; /* ダブルタップズームを無効化 */
         }
 
+        /* ゲーム画面表示中のスクロールを無効化 */
+        body.no-scroll {
+            overflow: hidden;
+            height: 100vh;
+        }
+
         .btn-3d {
             transition: all 0.1s ease-out;
             box-shadow: 0 6px 0 #6b7280;
@@ -411,6 +417,13 @@
 
             // 対象の画面を表示
             screenToShow.classList.remove('hidden');
+
+            // ゲーム画面の時だけスクロールを無効化
+            if (screenToShow === gameScreen) {
+                document.body.classList.add('no-scroll');
+            } else {
+                document.body.classList.remove('no-scroll');
+            }
         }
 
         // --- Confetti Functions ---
