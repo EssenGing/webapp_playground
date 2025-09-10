@@ -127,6 +127,12 @@
                     <!-- JavaScriptでカードが生成される -->
                 </div>
             </div>
+
+            <div class="mt-6">
+                 <button id="quit-button" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg text-lg btn-3d" style="box-shadow: 0 6px 0 #4b5563;">
+                    ゲームをやめる
+                </button>
+            </div>
         </div>
 
         <!-- 結果画面 -->
@@ -166,6 +172,7 @@
         const gameScreen = document.getElementById('game-screen');
         const endScreen = document.getElementById('end-screen');
         const startButton = document.getElementById('start-button');
+        const quitButton = document.getElementById('quit-button');
         const stageDisplay = document.getElementById('stage-display');
         const maxStageDisplay = document.getElementById('max-stage-display');
         const timerDisplay = document.getElementById('timer-display');
@@ -201,6 +208,10 @@
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', () => {
             stopConfetti();
+            showScreen(startScreen);
+        });
+        quitButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
             showScreen(startScreen);
         });
         questionCountSelector.addEventListener('click', (e) => {
