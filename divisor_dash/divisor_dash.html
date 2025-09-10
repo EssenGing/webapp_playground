@@ -162,9 +162,14 @@
                     </div>
                 </div>
 
-                <button id="restart-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 sm:py-5 px-10 rounded-lg text-xl sm:text-2xl btn-3d">
-                    トップへ戻る
-                </button>
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <button id="retry-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-xl btn-3d" style="box-shadow: 0 6px 0 #166534;">
+                        再チャレンジ
+                    </button>
+                    <button id="restart-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-xl btn-3d">
+                        トップへ戻る
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -190,6 +195,7 @@
 
         // 結果画面の要素
         const restartButton = document.getElementById('restart-button');
+        const retryButton = document.getElementById('retry-button');
         const resultTimeEl = document.getElementById('result-time');
         const resultPenaltyEl = document.getElementById('result-penalty');
         const resultScoreEl = document.getElementById('result-score');
@@ -209,12 +215,17 @@
         let animationFrameId;
         let maxStage = 3; // デフォルトの問題数
         const PENALTY_PER_MISTAKE = 3;
+        let problemSet = []; // 問題のセットを保存する配列
 
         // イベントリスナーの設定
-        startButton.addEventListener('click', startGame);
+        startButton.addEventListener('click', () => startGame(false));
         restartButton.addEventListener('click', () => {
             stopConfetti();
             showScreen(startScreen);
+        });
+        retryButton.addEventListener('click', () => {
+            stopConfetti();
+            startGame(true); // 同じ問題で再挑戦
         });
         quitButton.addEventListener('click', () => {
             clearInterval(timerInterval);
@@ -257,11 +268,20 @@
 
         /**
          * ゲームを開始する関数
+         * @param {boolean} isRetry - 同じ問題で再挑戦するかどうか
          */
-        function startGame() {
+        function startGame(isRetry = false) {
             currentStage = 0;
             penaltySeconds = 0;
             incorrectCards.clear();
+
+            // リトライでない場合のみ新しい問題セットを生成
+            if (!isRetry) {
+                problemSet = [];
+                for (let i = 0; i < maxStage; i++) {
+                    problemSet.push(Math.floor(Math.random() * 50) + 1);
+                }
+            }
 
             maxStageDisplay.textContent = maxStage;
             showScreen(gameScreen);
@@ -306,8 +326,8 @@
             stageDisplay.textContent = currentStage;
             incorrectCards.clear();
 
-            // 1から50までのランダムな数をお題として設定
-            problemNumber = Math.floor(Math.random() * 50) + 1;
+            // 保存された問題セットからお題を取得
+            problemNumber = problemSet[currentStage - 1];
             problemNumberDisplay.textContent = problemNumber;
 
             divisors = getDivisors(problemNumber);
