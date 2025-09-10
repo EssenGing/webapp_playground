@@ -2,21 +2,27 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>約数タイムアタック</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=M+PLUS+Rounded+1c:wght@700&display=swap" rel="stylesheet">
     <style>
         html, body {
-            /* Prevent scrolling on touch devices like iPad */
-            width: 100%;
-            height: 100%;
+            /* Prevent scrolling and ensure full viewport usage */
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
+            position: relative;
         }
         /* M PLUS Rounded 1c フォントを適用 */
         body {
             font-family: 'Inter', 'M PLUS Rounded 1c', sans-serif;
             touch-action: manipulation; /* ダブルタップズームを無効化 */
+        }
+
+        /* Add transition for smooth scaling */
+        #game-container {
+            transition: transform 0.2s ease-in-out;
         }
 
         /* カードのフリップアニメーション */
@@ -51,7 +57,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen">
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center">
 
     <div id="game-container" class="w-full max-w-md mx-auto p-4 sm:p-6 text-center">
 
@@ -169,9 +175,8 @@
             currentStage = 0;
             penaltySeconds = 0;
             incorrectCards.clear();
-            startScreen.classList.add('hidden');
-            endScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
+
+            showScreen(gameScreen);
 
             nextStage();
             startTimer();
@@ -192,6 +197,12 @@
             const elapsedTime = (Date.now() - startTime) / 1000;
             const totalTime = elapsedTime + penaltySeconds;
             timerDisplay.textContent = totalTime.toFixed(2);
+        }
+
+        // --- Sound Effects ---
+        function playSound(type) {
+            const sound = new Audio(type === 'correct' ? '../sounds/correct.mp3' : '../sounds/incorrect.mp3');
+            sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
         }
 
         /**
@@ -272,10 +283,12 @@
 
                 // 全て正解したら次のステージへ
                 if (remainingDivisors.length === 0) {
-                    setTimeout(nextStage, 800);
+                    playSound('correct');
+                    setTimeout(nextStage, 100);
                 }
             } else {
                 // 不正解の処理
+                playSound('incorrect');
                 if (!incorrectCards.has(number)) {
                     penaltySeconds += PENALTY_PER_MISTAKE;
                     incorrectCards.add(number);
@@ -292,14 +305,66 @@
          */
         function endGame() {
             clearInterval(timerInterval);
-            gameScreen.classList.add('hidden');
-            endScreen.classList.remove('hidden');
 
             const finalTime = parseFloat(timerDisplay.textContent);
             finalTimeDisplay.textContent = finalTime.toFixed(2);
             penaltyDisplay.textContent = `+${penaltySeconds.toFixed(2)}秒`;
+
+            showScreen(endScreen);
         }
+
+        /**
+         * 画面のレイアウトをビューポートに合わせて調整する関数
+         */
+        function adjustLayout() {
+            const container = document.getElementById('game-container');
+            // コンテナが非表示、またはコンテンツがない場合は処理を中断
+            if (container.offsetParent === null || container.offsetHeight === 0) {
+                return;
+            }
+
+            const contentHeight = container.offsetHeight;
+            const contentWidth = container.offsetWidth;
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+
+            // コンテナとビューポートの間に上下左右16pxずつの余白を確保
+            const availableHeight = viewportHeight - 16;
+            const availableWidth = viewportWidth - 16;
+
+            // 縦横それぞれの縮小率を計算
+            const scaleY = availableHeight / contentHeight;
+            const scaleX = availableWidth / contentWidth;
+
+            // より小さい方の縮小率を採用し、かつ1倍を超えて拡大しない
+            const scale = Math.min(scaleX, scaleY, 1);
+
+            // 計算したスケールを適用
+            container.style.transform = `scale(${scale})`;
+        }
+
+        /**
+         * 指定された画面を表示し、他の画面を非表示にする関数
+         * @param {HTMLElement} screenToShow - 表示する画面の要素
+         */
+        function showScreen(screenToShow) {
+            // すべての画面を一旦非表示に
+            startScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+
+            // 対象の画面を表示
+            screenToShow.classList.remove('hidden');
+
+            // DOMの描画更新を待ってからレイアウト調整を実行
+            requestAnimationFrame(adjustLayout);
+        }
+
+        // ページ読み込み時とウィンドウサイズ変更時にレイアウトを調整
+        window.addEventListener('load', adjustLayout);
+        window.addEventListener('resize', adjustLayout);
 
     </script>
 </body>
 </html>
+

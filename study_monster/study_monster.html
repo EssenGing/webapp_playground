@@ -285,7 +285,7 @@
 
         // --- Sound Effects ---
         function playSound(type) {
-            const sound = new Audio(type === 'correct' ? 'sounds/correct.mp3' : 'sounds/incorrect.mp3');
+            const sound = new Audio(type === 'correct' ? '../sounds/correct.mp3' : '../sounds/incorrect.mp3');
             sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
         }
 
