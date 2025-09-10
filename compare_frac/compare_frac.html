@@ -112,6 +112,7 @@
                 <button id="start-button" class="mt-8 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl sm:text-3xl btn-3d">
                     スタート！
                 </button>
+                <p class="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">効果音：OtoLogic</p>
             </div>
         </div>
 
@@ -296,6 +297,12 @@
         }
         function stopDrawing() { isDrawing = false; }
 
+        // --- Sound Effects ---
+        function playSound(type) {
+            const sound = new Audio(type === 'correct' ? '../sounds/correct.mp3' : '../sounds/incorrect.mp3');
+            sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
+        }
+
         // --- Game Logic ---
         function startGame() {
             correctCount = 0;
@@ -358,6 +365,9 @@
         function checkAnswer(userAnswer) {
             answerButtons.forEach(b => b.disabled = true);
             const isCorrect = userAnswer === currentQuestion.answer;
+
+            // NOTE: 正解・不正解のサウンドを再生
+            playSound(isCorrect ? 'correct' : 'incorrect');
 
             history.push({ question: currentQuestion, userAnswer, isCorrect });
 
@@ -423,4 +433,3 @@
     </script>
 </body>
 </html>
-
