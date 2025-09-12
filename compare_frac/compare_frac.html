@@ -369,6 +369,7 @@
         }
 
         function nextQuestion() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 計算メモをリセット
             currentQuestion = generateFractions();
             frac1El.innerHTML = `<span class="numerator">${currentQuestion.frac1.num}</span><span class="denominator">${currentQuestion.frac1.den}</span>`;
             frac2El.innerHTML = `<span class="numerator">${currentQuestion.frac2.num}</span><span class="denominator">${currentQuestion.frac2.den}</span>`;
