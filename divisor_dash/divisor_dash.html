@@ -82,7 +82,14 @@
 </head>
 <body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen">
 
-    <div id="game-container" class="w-full max-w-md mx-auto p-4 sm:p-6 text-center">
+    <div id="game-container" class="w-full max-w-md mx-auto p-4 sm:p-6 text-center relative">
+
+        <!-- サウンドオン/オフボタン -->
+        <button id="mute-button" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-slate-400 hover:text-slate-600 z-10 p-2 rounded-full hover:bg-slate-200 transition">
+            <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+
 
         <!-- スタート画面 -->
         <div id="start-screen" class="screen space-y-4 sm:space-y-6">
@@ -192,6 +199,9 @@
         const correctSound = document.getElementById('correct-sound');
         const incorrectSound = document.getElementById('incorrect-sound');
         const questionCountSelector = document.getElementById('question-count-selector');
+        const muteButton = document.getElementById('mute-button');
+        const soundOnIcon = document.getElementById('sound-on-icon');
+        const soundOffIcon = document.getElementById('sound-off-icon');
 
         // 結果画面の要素
         const restartButton = document.getElementById('restart-button');
@@ -216,6 +226,7 @@
         let maxStage = 3; // デフォルトの問題数
         const PENALTY_PER_MISTAKE = 3;
         let problemSet = []; // 問題のセットを保存する配列
+        let isMuted = false;
 
         // イベントリスナーの設定
         startButton.addEventListener('click', () => startGame(false));
@@ -238,6 +249,11 @@
                 button.classList.add('selected');
                 maxStage = parseInt(button.dataset.count, 10);
             }
+        });
+        muteButton.addEventListener('click', () => {
+            isMuted = !isMuted;
+            soundOnIcon.classList.toggle('hidden', isMuted);
+            soundOffIcon.classList.toggle('hidden', !isMuted);
         });
 
         /**
@@ -309,6 +325,7 @@
 
         // --- Sound Effects ---
         function playSound(type) {
+            if (isMuted) return;
             const sound = new Audio(type === 'correct' ? '../sounds/correct.mp3' : '../sounds/incorrect.mp3');
             sound.play().catch(e => console.error(`Error playing ${type} sound:`, e));
         }
