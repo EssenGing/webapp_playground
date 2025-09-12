@@ -167,6 +167,11 @@
                     <canvas id="scratchpad"></canvas>
                 </div>
             </div>
+            <div class="mt-6">
+                <button id="quit-button" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg text-lg btn-3d" style="box-shadow: 0 6px 0 #4b5563;">
+                    ゲームをやめる
+                </button>
+            </div>
         </div>
 
         <!-- Result Screen -->
@@ -209,6 +214,7 @@
         const resultScreen = document.getElementById('result-screen');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
+        const quitButton = document.getElementById('quit-button');
         const correctCountEl = document.getElementById('correct-count');
         const targetCountEl = document.getElementById('target-count');
         const timerEl = document.getElementById('timer');
@@ -259,6 +265,11 @@
         restartButton.addEventListener('click', () => {
             stopConfetti();
             resultScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+        quitButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            gameScreen.classList.add('hidden');
             startScreen.classList.remove('hidden');
         });
         answerButtons.forEach(button => {
