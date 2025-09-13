@@ -192,6 +192,7 @@
                 <p class="text-7xl sm:text-9xl">🏆✨🎉</p>
                 <div id="clear-results-area" class="text-left max-h-40 sm:max-h-60 overflow-y-auto bg-gray-50 p-4 sm:p-6 rounded-lg border"></div>
                 <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-3 px-8 sm:py-5 sm:px-10 rounded-lg text-xl sm:text-3xl btn-3d">もういっかい</button>
+                <button id="create-incorrect-deck-clear-btn" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d hidden">まちがえた問題でデッキ作成</button>
             </div>
         </div>
 
@@ -203,6 +204,7 @@
                 <p class="text-lg sm:text-2xl">ざんねん…<br>またちょうせんしてね！</p>
                 <div id="gameover-results-area" class="text-left max-h-40 sm:max-h-60 overflow-y-auto bg-gray-700 p-4 sm:p-6 rounded-lg border border-gray-600"></div>
                 <button class="restart-btn bg-cyan-400 hover:bg-cyan-500 font-bold py-3 px-8 sm:py-5 sm:px-10 rounded-lg text-xl sm:text-3xl btn-3d">もういっかい</button>
+                <button id="create-incorrect-deck-gameover-btn" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d hidden">まちがえた問題でデッキ作成</button>
             </div>
         </div>
 
@@ -247,6 +249,9 @@
         const muteButton = document.getElementById('mute-button');
         const soundOnIcon = document.getElementById('sound-on-icon');
         const soundOffIcon = document.getElementById('sound-off-icon');
+        const createIncorrectDeckClearBtn = document.getElementById('create-incorrect-deck-clear-btn');
+        const createIncorrectDeckGameoverBtn = document.getElementById('create-incorrect-deck-gameover-btn');
+
 
         // --- Default Decks ---
         const defaultDecks = [
@@ -735,6 +740,24 @@
                 renderResults('clear-results-area');
             }
 
+            const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
+            if (incorrectQuestions.length > 0 && !isPracticeMode) {
+                const uniqueIncorrectCount = new Set(incorrectQuestions.map(q => q.q)).size;
+                const originalDeck = allDecks[currentDeckIndex];
+                const newDeckName = `${originalDeck.name}_まちがえた問題`;
+                const incorrectDeckExists = allDecks.some(deck => deck.name === newDeckName && !deck.isDefault);
+
+                if (incorrectDeckExists) {
+                    createIncorrectDeckClearBtn.textContent = `まちがえた問題をデッキに追加`;
+                } else {
+                    createIncorrectDeckClearBtn.textContent = `まちがえた問題でデッキ作成`;
+                }
+                createIncorrectDeckClearBtn.disabled = false;
+                createIncorrectDeckClearBtn.classList.remove('hidden');
+            } else {
+                createIncorrectDeckClearBtn.classList.add('hidden');
+            }
+
             startConfetti();
         }
 
@@ -742,7 +765,63 @@
             stopTimer();
             showScreen('gameover');
             renderResults('gameover-results-area');
+
+            const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
+            if (incorrectQuestions.length > 0) {
+                const uniqueIncorrectCount = new Set(incorrectQuestions.map(q => q.q)).size;
+                const originalDeck = allDecks[currentDeckIndex];
+                const newDeckName = `${originalDeck.name}_まちがえた問題`;
+                const incorrectDeckExists = allDecks.some(deck => deck.name === newDeckName && !deck.isDefault);
+
+                if (incorrectDeckExists) {
+                    createIncorrectDeckGameoverBtn.textContent = `まちがえた問題をデッキに追加`;
+                } else {
+                    createIncorrectDeckGameoverBtn.textContent = `まちがえた問題でデッキ作成`;
+                }
+                createIncorrectDeckGameoverBtn.disabled = false;
+                createIncorrectDeckGameoverBtn.classList.remove('hidden');
+            } else {
+                createIncorrectDeckGameoverBtn.classList.add('hidden');
+            }
         }
+
+        function createIncorrectDeck(buttonElement) {
+            const incorrectQuestionsRaw = currentQuestions.filter(q => q.result !== 'correct');
+
+            if (incorrectQuestionsRaw.length === 0) return;
+
+            const uniqueIncorrectQuestions = Array.from(new Map(incorrectQuestionsRaw.map(item =>
+                [item.q, { q: item.q, a: item.a }]
+            )).values());
+
+            if (uniqueIncorrectQuestions.length === 0) return;
+
+            const originalDeck = allDecks[currentDeckIndex];
+            const newDeckName = `${originalDeck.name}_まちがえた問題`;
+
+            let incorrectDeck = allDecks.find(deck => deck.name === newDeckName && !deck.isDefault);
+
+            if (incorrectDeck) {
+                const existingQuestionsMap = new Map(incorrectDeck.questions.map(q => [q.q, q]));
+                uniqueIncorrectQuestions.forEach(q => {
+                    existingQuestionsMap.set(q.q, q);
+                });
+                incorrectDeck.questions = Array.from(existingQuestionsMap.values());
+            } else {
+                incorrectDeck = {
+                    name: newDeckName,
+                    questions: uniqueIncorrectQuestions,
+                    isDefault: false,
+                    category: 'じぶんのデッキ'
+                };
+                allDecks.push(incorrectDeck);
+            }
+
+            saveUserDecks();
+            buttonElement.textContent = '作成しました！';
+            buttonElement.disabled = true;
+        }
+
 
         // --- Event Listeners ---
         deckCategoryTabs.addEventListener('click', e => {
@@ -871,6 +950,9 @@
         handwritingCanvas.addEventListener('touchend', stopDrawing);
         clearCanvasBtn.addEventListener('click', clearCanvas);
         window.addEventListener('resize', initializeCanvas);
+
+        createIncorrectDeckClearBtn.addEventListener('click', () => createIncorrectDeck(createIncorrectDeckClearBtn));
+        createIncorrectDeckGameoverBtn.addEventListener('click', () => createIncorrectDeck(createIncorrectDeckGameoverBtn));
 
         // --- App Initialization ---
         function initApp() {
