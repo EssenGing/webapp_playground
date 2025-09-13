@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>がんばれ！モンスター討伐隊</title>
+    <title>書いて答えてモンスターをたおせ！</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,8 +137,9 @@
         <div id="setup-screen" class="hidden space-y-4 sm:space-y-6">
             <h1 id="setup-title" class="text-2xl sm:text-4xl font-extrabold text-amber-600"></h1>
             <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
-                <h2 class="text-xl sm:text-3xl font-bold mb-6">なんびき とうばつする？</h2>
+                <h2 class="text-xl sm:text-3xl font-bold mb-6">なん体 たおす？</h2>
                 <div id="question-count-buttons" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                <div id="setup-info-area"></div>
                  <button id="back-to-decks-btn" class="mt-6 w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d">デッキをえらびなおす</button>
             </div>
         </div>
@@ -229,6 +230,7 @@
         const backToSelectionBtn = document.getElementById('back-to-selection-btn');
         const setupTitle = document.getElementById('setup-title');
         const questionCountButtons = document.getElementById('question-count-buttons');
+        const setupInfoArea = document.getElementById('setup-info-area');
         const backToDecksBtn = document.getElementById('back-to-decks-btn');
         const monsterTitle = document.getElementById('monster-title');
         const counter = document.getElementById('counter');
@@ -394,16 +396,19 @@
             const deck = allDecks[deckIndex];
             setupTitle.textContent = `『${deck.name}』`;
             questionCountButtons.innerHTML = '';
-            const counts = [5, 10, 15, 20];
-            counts.forEach(count => {
-                 if(deck.questions.length >= count) {
-                     questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">${count}ひき</button>`;
-                 }
-            });
-            if (deck.questions.length > 0) {
-                 questionCountButtons.innerHTML += `<button data-questions="${deck.questions.length}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">ぜんぶ(${deck.questions.length}ひき)</button>`;
+            setupInfoArea.innerHTML = ''; // Clear info area
+
+            if (deck.questions.length === 0) {
+                questionCountButtons.innerHTML = `<p class="text-gray-500 col-span-2 lg:col-span-4 text-lg sm:text-xl">問題がありません。<br>デッキを編集してください。</p>`;
             } else {
-                 questionCountButtons.innerHTML = `<p class="text-gray-500 col-span-2 lg:col-span-4 text-lg sm:text-xl">問題がありません。<br>デッキを編集してください。</p>`
+                const counts = [5, 10];
+                // Always show 5 and 10 options
+                counts.forEach(count => {
+                     questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">${count}体</button>`;
+                });
+
+                // Add warning message
+                setupInfoArea.innerHTML = `<p class="text-xs sm:text-sm text-gray-500 mt-4">もんだいが少ないときは、同じもんだいが出ちゃうよ</p>`;
             }
             showScreen('setup');
         }
@@ -416,7 +421,30 @@
             buttonsDisabled = false;
 
             let deckQuestions = [...allDecks[currentDeckIndex].questions];
-            currentQuestions = deckQuestions.sort(() => 0.5 - Math.random()).slice(0, totalMonsters);
+            currentQuestions = []; // Reset the questions list
+
+            if (deckQuestions.length > 0) {
+                // Shuffle the original deck questions to create a random unique sequence
+                let shuffledDeck = [...deckQuestions].sort(() => 0.5 - Math.random());
+
+                if (numQuestions <= shuffledDeck.length) {
+                    // If the required number of questions is less than or equal to the available unique questions,
+                    // just take a slice of the shuffled unique questions.
+                    currentQuestions = shuffledDeck.slice(0, numQuestions);
+                } else {
+                    // If more questions are needed than are available,
+                    // start with the full shuffled list of unique questions.
+                    currentQuestions = [...shuffledDeck];
+
+                    // Then, add the remaining number of questions by picking randomly from the original deck.
+                    const remainingQuestions = numQuestions - shuffledDeck.length;
+                    for (let i = 0; i < remainingQuestions; i++) {
+                        const randomIndex = Math.floor(Math.random() * deckQuestions.length);
+                        currentQuestions.push(deckQuestions[randomIndex]);
+                    }
+                }
+            }
+
             currentQuestions.forEach(q => q.result = null);
             currentQuestionIndex = 0;
 
@@ -478,7 +506,7 @@
         }
 
         function updateCounter() {
-            counter.textContent = `のこり ${totalMonsters - defeatedMonsters} ひき`;
+            counter.textContent = `のこり ${totalMonsters - defeatedMonsters} 体`;
         }
 
         function updateLives() {
