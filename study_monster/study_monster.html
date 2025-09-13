@@ -164,6 +164,7 @@
                     <div id="game-buttons" class="flex flex-col space-y-3">
                         <button id="correct-btn" class="bg-green-500 hover:bg-green-600 text-white font-extrabold py-2 px-4 sm:py-3 sm:px-5 rounded-xl text-base sm:text-xl btn-3d">せいかい！</button>
                         <button id="retry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-2 px-4 sm:py-3 sm:px-5 rounded-xl text-base sm:text-xl btn-3d">解き直し</button>
+                        <button id="next-btn" class="hidden bg-blue-500 hover:bg-blue-600 text-white font-extrabold py-2 px-4 sm:py-3 sm:px-5 rounded-xl text-base sm:text-xl btn-3d">つぎへ</button>
                     </div>
                 </div>
 
@@ -175,7 +176,7 @@
                 <!-- UPDATED: Monster area height for responsive monster size -->
                 <div id="monster-area" class="h-36 sm:h-48 flex items-center justify-center"></div>
 
-                <div class="my-3 sm:my-4">
+                <div class="my-3 sm:my-4 relative">
                     <label class="font-bold text-left block mb-2 text-gray-600 text-base sm:text-lg">こたえをかいてみよう！</label>
                     <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-36 sm:h-56 cursor-crosshair touch-none"></canvas>
                     <button id="clear-canvas-btn" class="mt-3 w-full sm:w-1/2 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 rounded-lg btn-3d text-base sm:text-lg">けす</button>
@@ -239,6 +240,7 @@
         const monsterArea = document.getElementById('monster-area');
         const correctBtn = document.getElementById('correct-btn');
         const retryBtn = document.getElementById('retry-btn');
+        const nextBtn = document.getElementById('next-btn');
         const handwritingCanvas = document.getElementById('handwriting-canvas');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const timerBar = document.getElementById('timer-bar');
@@ -271,6 +273,7 @@
         const TIME_LIMIT = 15;
         let selectedCategory = '小学1年生';
         let isMuted = false;
+        let isPracticeMode = false;
 
         // --- Monster Data ---
         const MONSTERS = [
@@ -407,6 +410,9 @@
                      questionCountButtons.innerHTML += `<button data-questions="${count}" class="question-btn bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">${count}体</button>`;
                 });
 
+                // Add practice mode button
+                questionCountButtons.innerHTML += `<button id="practice-mode-btn" class="col-span-2 lg:col-span-4 bg-red-400 hover:bg-red-500 text-white font-bold py-4 sm:py-5 px-4 rounded-lg text-lg sm:text-2xl btn-3d">れんしゅうモード</button>`;
+
                 // Add warning message
                 setupInfoArea.innerHTML = `<p class="text-xs sm:text-sm text-gray-500 mt-4">もんだいが少ないときは、同じもんだいが出ちゃうよ</p>`;
             }
@@ -419,6 +425,21 @@
             defeatedMonsters = 0;
             mistakes = 0;
             buttonsDisabled = false;
+
+            if (isPracticeMode) {
+                correctBtn.classList.add('hidden');
+                retryBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                livesArea.classList.add('hidden');
+                timerBar.parentElement.classList.add('hidden');
+                stopTimer();
+            } else {
+                correctBtn.classList.remove('hidden');
+                retryBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+                livesArea.classList.remove('hidden');
+                timerBar.parentElement.classList.remove('hidden');
+            }
 
             let deckQuestions = [...allDecks[currentDeckIndex].questions];
             currentQuestions = []; // Reset the questions list
@@ -463,6 +484,29 @@
             displayQuestion();
         }
 
+        function drawPracticeAnswer() {
+            if (!canvasCtx || currentQuestionIndex >= currentQuestions.length) return;
+            const answer = currentQuestions[currentQuestionIndex].a;
+            const canvas = handwritingCanvas;
+            canvasCtx.save();
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+
+            // Dynamically calculate font size to fit the canvas
+            const maxFontSize = canvas.height * 0.7;
+            let fontSize = maxFontSize;
+            canvasCtx.font = `800 ${fontSize}px '${getComputedStyle(document.body).fontFamily}'`;
+
+            while(canvasCtx.measureText(answer).width > canvas.width * 0.9) {
+                fontSize--;
+                canvasCtx.font = `800 ${fontSize}px '${getComputedStyle(document.body).fontFamily}'`;
+            }
+
+            canvasCtx.textAlign = 'center';
+            canvasCtx.textBaseline = 'middle';
+            canvasCtx.fillText(answer, canvas.width / 2, canvas.height / 2);
+            canvasCtx.restore();
+        }
+
         function displayQuestion() {
             clearCanvas();
             if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= totalMonsters) {
@@ -472,7 +516,17 @@
             const qa = currentQuestions[currentQuestionIndex];
             questionDisplay.innerHTML = `<b>もんだい：</b> ${qa.q}`;
             buttonsDisabled = false;
-            startTimer();
+
+            setTimeout(() => {
+                if (isPracticeMode) {
+                    initializeCanvas();
+                    drawPracticeAnswer();
+                }
+            }, 100);
+
+            if (!isPracticeMode) {
+                startTimer();
+            }
         }
 
         function spawnMonster() {
@@ -607,10 +661,19 @@
             canvasCtx.lineJoin = 'round';
             canvasCtx.lineCap = 'round';
             clearCanvas();
+
+            if (isPracticeMode && !screens.main.classList.contains('hidden')) {
+                drawPracticeAnswer();
+            }
         }
 
         function clearCanvas() {
-            if(canvasCtx) canvasCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+            if(canvasCtx) {
+                canvasCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+                if (isPracticeMode && !screens.main.classList.contains('hidden')) {
+                    drawPracticeAnswer();
+                }
+            }
         }
 
         function getCoords(e) {
@@ -658,7 +721,20 @@
         function showClearScreen() {
             stopTimer();
             showScreen('clear');
-            renderResults('clear-results-area');
+
+            const clearScreenTitle = document.querySelector('#clear-screen h1');
+            const clearResultsArea = document.getElementById('clear-results-area');
+
+            if (isPracticeMode) {
+                clearScreenTitle.innerHTML = "練習おわり！<br>よくがんばったね！";
+                clearScreenTitle.className = 'text-3xl sm:text-6xl font-extrabold text-cyan-500 animate-celebrate';
+                clearResultsArea.innerHTML = `<p class="text-center text-lg sm:text-xl text-gray-600 p-4">たくさん練習して、<br>つぎは本番でたたかおう！</p>`;
+            } else {
+                clearScreenTitle.innerHTML = "ぜんぶ やっつけた！<br>おめでとう！";
+                clearScreenTitle.className = 'text-3xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-celebrate';
+                renderResults('clear-results-area');
+            }
+
             startConfetti();
         }
 
@@ -736,8 +812,17 @@
         backToSelectionBtn.addEventListener('click', () => showScreen('deckSelection'));
 
         questionCountButtons.addEventListener('click', e => {
-            if (e.target.classList.contains('question-btn')) {
-                startGame(parseInt(e.target.dataset.questions));
+            const target = e.target.closest('button');
+            if (!target) return;
+
+            if (target.id === 'practice-mode-btn') {
+                isPracticeMode = true;
+                const deck = allDecks[currentDeckIndex];
+                const numQuestions = deck.questions.length >= 10 ? 10 : deck.questions.length;
+                startGame(numQuestions);
+            } else if (target.classList.contains('question-btn')) {
+                isPracticeMode = false;
+                startGame(parseInt(target.dataset.questions));
             }
         });
 
@@ -748,6 +833,19 @@
 
         correctBtn.addEventListener('click', handleCorrect);
         retryBtn.addEventListener('click', handleRetry);
+
+        nextBtn.addEventListener('click', () => {
+            if (buttonsDisabled) return;
+
+            defeatedMonsters++;
+            currentQuestionIndex++;
+
+            if (defeatedMonsters >= totalMonsters) {
+                showClearScreen();
+            } else {
+                nextTurn();
+            }
+        });
 
         document.querySelectorAll('.restart-btn').forEach(btn => {
             btn.addEventListener('click', () => {
