@@ -450,23 +450,28 @@
             currentQuestions = []; // Reset the questions list
 
             if (deckQuestions.length > 0) {
-                // Shuffle the original deck questions to create a random unique sequence
+                // モンスターの数とライフポイント（間違えられる回数）の合計分の問題を用意します。
+                // これにより、時間切れで間違えても常に新しい問題が出題されるようになります。
+                const totalQuestionsToPrepare = numQuestions + MAX_MISTAKES;
+
+                // 利用可能な問題をシャッフルします。
                 let shuffledDeck = [...deckQuestions].sort(() => 0.5 - Math.random());
 
-                if (numQuestions <= shuffledDeck.length) {
-                    // If the required number of questions is less than or equal to the available unique questions,
-                    // just take a slice of the shuffled unique questions.
-                    currentQuestions = shuffledDeck.slice(0, numQuestions);
+                // 必要な問題数がデッキの問題数より少ないか等しい場合
+                if (totalQuestionsToPrepare <= shuffledDeck.length) {
+                    // シャッフルされたデッキから必要な数だけ問題を取得します。
+                    currentQuestions = shuffledDeck.slice(0, totalQuestionsToPrepare);
                 } else {
-                    // If more questions are needed than are available,
-                    // start with the full shuffled list of unique questions.
+                    // 必要な問題数がデッキの問題数より多い場合
+                    // まず、シャッフルされたデッキのすべての問題を追加します。
                     currentQuestions = [...shuffledDeck];
 
-                    // Then, add the remaining number of questions by picking randomly from the original deck.
-                    const remainingQuestions = numQuestions - shuffledDeck.length;
+                    // 不足している問題の数だけ、元のデッキからランダムに追加します（問題が重複します）。
+                    const remainingQuestions = totalQuestionsToPrepare - shuffledDeck.length;
                     for (let i = 0; i < remainingQuestions; i++) {
                         const randomIndex = Math.floor(Math.random() * deckQuestions.length);
-                        currentQuestions.push(deckQuestions[randomIndex]);
+                        // 問題が重複する場合でも、各問題が独立したオブジェクトになるようにコピーを作成します。
+                        currentQuestions.push(JSON.parse(JSON.stringify(deckQuestions[randomIndex])));
                     }
                 }
             }
@@ -514,7 +519,8 @@
 
         function displayQuestion() {
             clearCanvas();
-            if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= totalMonsters) {
+            // 用意した問題リストをすべて使い切ったらゲームクリア（予期せぬエラー防止）
+            if (currentQuestionIndex >= currentQuestions.length) {
                  showClearScreen();
                 return;
             }
@@ -622,11 +628,8 @@
             monsterEl?.addEventListener('animationend', () => {
                 monsterEl.classList.remove('animate-shake');
                 currentQuestionIndex++;
-                 if (currentQuestionIndex >= totalMonsters) {
-                     showClearScreen();
-                 } else {
-                    displayQuestion();
-                 }
+                // 間違えた場合は、次の問題を表示するだけ
+                displayQuestion();
             }, { once: true });
         }
 
@@ -974,3 +977,4 @@
     </script>
 </body>
 </html>
+
