@@ -750,9 +750,9 @@
             }
 
             const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
-            if (incorrectQuestions.length > 0 && !isPracticeMode) {
-                const uniqueIncorrectCount = new Set(incorrectQuestions.map(q => q.q)).size;
-                const originalDeck = allDecks[currentDeckIndex];
+            const originalDeck = allDecks[currentDeckIndex];
+            // まちがえた問題があり、練習モードでなく、現在のデッキが「まちがえた問題」デッキでない場合のみボタンを表示
+            if (incorrectQuestions.length > 0 && !isPracticeMode && originalDeck.category !== 'まちがえた問題') {
                 const newDeckName = `${originalDeck.name}_まちがえた問題`;
                 const incorrectDeckExists = allDecks.some(deck => deck.name === newDeckName && !deck.isDefault);
 
@@ -776,9 +776,9 @@
             renderResults('gameover-results-area');
 
             const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
-            if (incorrectQuestions.length > 0) {
-                const uniqueIncorrectCount = new Set(incorrectQuestions.map(q => q.q)).size;
-                const originalDeck = allDecks[currentDeckIndex];
+            const originalDeck = allDecks[currentDeckIndex];
+             // まちがえた問題があり、現在のデッキが「まちがえた問題」デッキでない場合のみボタンを表示
+            if (incorrectQuestions.length > 0 && originalDeck.category !== 'まちがえた問題') {
                 const newDeckName = `${originalDeck.name}_まちがえた問題`;
                 const incorrectDeckExists = allDecks.some(deck => deck.name === newDeckName && !deck.isDefault);
 
@@ -983,4 +983,3 @@
     </script>
 </body>
 </html>
-
