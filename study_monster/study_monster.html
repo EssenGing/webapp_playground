@@ -749,7 +749,7 @@
                 renderResults('clear-results-area');
             }
 
-            const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
+            const incorrectQuestions = currentQuestions.filter(q => q.result === 'incorrect');
             const originalDeck = allDecks[currentDeckIndex];
             // まちがえた問題があり、練習モードでなく、現在のデッキが「まちがえた問題」デッキでない場合のみボタンを表示
             if (incorrectQuestions.length > 0 && !isPracticeMode && originalDeck.category !== 'まちがえた問題') {
@@ -775,7 +775,7 @@
             showScreen('gameover');
             renderResults('gameover-results-area');
 
-            const incorrectQuestions = currentQuestions.filter(q => q.result !== 'correct');
+            const incorrectQuestions = currentQuestions.filter(q => q.result === 'incorrect');
             const originalDeck = allDecks[currentDeckIndex];
              // まちがえた問題があり、現在のデッキが「まちがえた問題」デッキでない場合のみボタンを表示
             if (incorrectQuestions.length > 0 && originalDeck.category !== 'まちがえた問題') {
@@ -795,7 +795,7 @@
         }
 
         function createIncorrectDeck(buttonElement) {
-            const incorrectQuestionsRaw = currentQuestions.filter(q => q.result !== 'correct');
+            const incorrectQuestionsRaw = currentQuestions.filter(q => q.result === 'incorrect');
 
             if (incorrectQuestionsRaw.length === 0) return;
 
