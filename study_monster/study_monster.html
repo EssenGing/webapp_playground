@@ -96,7 +96,7 @@
             <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
                 <h2 class="text-xl sm:text-3xl font-bold mb-4 sm:mb-6">デッキをえらんでね</h2>
                 <div id="deck-category-tabs" class="flex flex-wrap justify-center gap-2 mb-6"></div>
-                <div id="deck-list" class="space-y-4 mb-6 max-h-60 sm:max-h-72 overflow-y-auto"></div>
+                <div id="deck-list" class="space-y-4 mb-6 h-[15rem] sm:h-[18rem] overflow-y-auto bg-gray-50 rounded-lg p-4"></div>
                 <button id="new-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-5 sm:py-4 sm:px-6 w-full rounded-lg text-lg sm:text-2xl btn-3d">+ あたらしいデッキをつくる</button>
                 <p class="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">効果音：OtoLogic</p>
             </div>
@@ -346,6 +346,7 @@
 
             deckList.innerHTML = '';
             if (decksToDisplay.length === 0) {
+                deckList.classList.add('flex', 'justify-center', 'items-center');
                 let emptyMessage = 'このカテゴリのデッキはありません。';
                 if (selectedCategory === 'じぶんのデッキ') {
                     emptyMessage = 'まだデッキがありません。<br>あたらしいデッキをつくろう！';
@@ -354,6 +355,7 @@
                 }
                 deckList.innerHTML = `<p class="text-gray-500 text-base sm:text-xl">${emptyMessage}</p>`;
             } else {
+                deckList.classList.remove('flex', 'justify-center', 'items-center');
                 decksToDisplay.forEach(deck => {
                     const originalIndex = allDecks.indexOf(deck);
                     const deckEl = document.createElement('div');
