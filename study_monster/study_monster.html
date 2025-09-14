@@ -181,6 +181,7 @@
                     <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-36 sm:h-56 cursor-crosshair touch-none"></canvas>
                     <button id="clear-canvas-btn" class="mt-3 w-full sm:w-1/2 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 rounded-lg btn-3d text-base sm:text-lg">けす</button>
                 </div>
+                <button id="quit-practice-btn" class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d w-full mt-4">ゲームをやめる</button>
             </div>
         </div>
 
@@ -251,6 +252,7 @@
         const soundOffIcon = document.getElementById('sound-off-icon');
         const createIncorrectDeckClearBtn = document.getElementById('create-incorrect-deck-clear-btn');
         const createIncorrectDeckGameoverBtn = document.getElementById('create-incorrect-deck-gameover-btn');
+        const quitPracticeBtn = document.getElementById('quit-practice-btn');
 
 
         // --- Default Decks ---
@@ -441,6 +443,7 @@
                 correctBtn.classList.add('hidden');
                 retryBtn.classList.add('hidden');
                 nextBtn.classList.remove('hidden');
+                quitPracticeBtn.classList.remove('hidden');
                 livesArea.classList.add('hidden');
                 timerBar.parentElement.classList.add('hidden');
                 stopTimer();
@@ -448,6 +451,7 @@
                 correctBtn.classList.remove('hidden');
                 retryBtn.classList.remove('hidden');
                 nextBtn.classList.add('hidden');
+                quitPracticeBtn.classList.add('hidden');
                 livesArea.classList.remove('hidden');
                 timerBar.parentElement.classList.remove('hidden');
             }
@@ -933,6 +937,11 @@
             } else {
                 nextTurn();
             }
+        });
+
+        quitPracticeBtn.addEventListener('click', () => {
+            renderDeckSelectionScreen();
+            showScreen('deckSelection');
         });
 
         document.querySelectorAll('.restart-btn').forEach(btn => {
