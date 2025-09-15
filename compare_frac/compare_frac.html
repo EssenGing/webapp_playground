@@ -71,6 +71,16 @@
         }
         .animate-celebrate { animation: celebrate-text 1s ease-in-out infinite; }
 
+        /* ポップアップ用のスタイル */
+        .modal-enter { opacity: 0; }
+        .modal-enter-active { opacity: 1; transition: opacity 200ms ease-out; }
+        .modal-leave { opacity: 1; }
+        .modal-leave-active { opacity: 0; transition: opacity 200ms ease-in; }
+        .modal-content-enter { transform: scale(0.95); }
+        .modal-content-enter-active { transform: scale(1); transition: transform 200ms ease-out; }
+        .modal-content-leave { transform: scale(1); }
+        .modal-content-leave-active { transform: scale(0.95); transition: transform 200ms ease-in; }
+
         /* Responsive adjustments */
         @media (min-width: 640px) { /* sm breakpoint */
             .fraction {
@@ -119,8 +129,11 @@
                     </div>
                 </div>
 
-                <button id="start-button" class="mt-8 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl sm:text-3xl btn-3d">
+                <button id="start-button" class="mt-8 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl sm:text-3xl btn-3d" style="box-shadow: 0 6px 0 #0891b2;">
                     スタート！
+                </button>
+                 <button id="how-to-play-button" class="mt-4 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 rounded-lg text-lg btn-3d" style="box-shadow: 0 6px 0 #4b5563;">
+                    あそびかた
                 </button>
                 <p class="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">効果音：OtoLogic</p>
             </div>
@@ -164,7 +177,7 @@
                 <div class="mt-6 sm:mt-8 text-center">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="text-lg sm:text-xl font-bold text-gray-600">計算メモ</h3>
-                        <button id="clear-canvas-btn" class="bg-red-500 hover:bg-red-600 text-white text-sm sm:text-md font-bold py-2 px-4 sm:px-5 rounded-lg btn-3d">
+                        <button id="clear-canvas-btn" class="bg-red-500 hover:bg-red-600 text-white text-sm sm:text-md font-bold py-2 px-4 sm:px-5 rounded-lg btn-3d" style="box-shadow: 0 6px 0 #b91c1c;">
                             けす
                         </button>
                     </div>
@@ -204,12 +217,32 @@
                      <div id="history-table-body" class="text-sm sm:text-base"></div>
                 </div>
 
-                <button id="restart-button" class="w-full bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-10 rounded-lg text-2xl sm:text-3xl btn-3d">
+                <button id="restart-button" class="w-full bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 sm:py-5 px-10 rounded-lg text-2xl sm:text-3xl btn-3d" style="box-shadow: 0 6px 0 #0e7490;">
                     トップへ戻る
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- あそびかたモーダル -->
+    <div id="how-to-play-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 modal-enter">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg text-left relative modal-content-enter">
+            <h2 class="text-2xl sm:text-3xl font-bold text-amber-600 mb-6 text-center">あそびかた</h2>
+            <div class="space-y-4 text-gray-700 text-base sm:text-lg">
+                <p><span class="font-bold text-cyan-500">① 問題数をえらぶ</span><br>挑戦する問題数をえらんで「スタート！」を押してね。</p>
+                <p><span class="font-bold text-cyan-500">② 大きさをくらべる</span><br>左右の分数の大きさを比べて、右の分数が大きいと思ったら「<span class="font-bold text-xl">&lt;</span>」、同じ大きさだと思ったら「<span class="font-bold text-xl">=</span>」、左の分数が大きいと思ったら「<span class="font-bold text-xl">&gt;</span>」 のボタンで答えよう。</p>
+                <p><span class="font-bold text-green-500">💡 計算メモをつかおう</span><br>通分などのむずかしい計算は、下の「計算メモ」を使って考えられるよ。慣れてきたらメモを使わなくてもOK！</p>
+                <p><span class="font-bold text-cyan-500">③ タイムをきそえ</span><br>最終タイムを競って遊んでね！</p>
+                <p><span class="font-bold text-red-500">⚠️ ペナルティ</span><br>まちがった答えをえらぶと、<span class="font-bold">3秒のペナルティタイム</span>が追加されるよ。</p>
+                <p><span class="font-bold text-cyan-500">④ 見直そう</span><br>間違えた問題はしっかり復習して、何度も挑戦しよう</p>
+                <p><span class="font-bold text-black-500 text-center">さあ、楽しく分数をマスターだ！</span></p>
+            </div>
+            <button id="close-modal-button" class="mt-8 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-lg text-lg btn-3d" style="box-shadow: 0 6px 0 #0891b2;">
+                わかった！
+            </button>
+        </div>
+    </div>
+
 
     <script>
         // DOM Elements
@@ -237,6 +270,11 @@
         const soundOnIcon = document.getElementById('sound-on-icon');
         const soundOffIcon = document.getElementById('sound-off-icon');
 
+        // Modal elements
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const howToPlayModal = document.getElementById('how-to-play-modal');
+        const closeModalButton = document.getElementById('close-modal-button');
+
         // Game State
         let correctCount = 0;
         let wrongCount = 0;
@@ -262,6 +300,24 @@
             ctx.lineWidth = 4;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+        }
+
+        // --- Modal Functions ---
+        function showModal() {
+            howToPlayModal.classList.remove('hidden');
+            setTimeout(() => {
+                howToPlayModal.classList.remove('modal-enter', 'modal-content-enter');
+                howToPlayModal.classList.add('modal-enter-active', 'modal-content-enter-active');
+            }, 10);
+        }
+
+        function hideModal() {
+            howToPlayModal.classList.remove('modal-enter-active', 'modal-content-enter-active');
+            howToPlayModal.classList.add('modal-leave', 'modal-content-leave');
+            setTimeout(() => {
+                howToPlayModal.classList.add('hidden');
+                howToPlayModal.classList.remove('modal-leave', 'modal-content-leave');
+            }, 200);
         }
 
         // --- Event Listeners ---
@@ -296,6 +352,16 @@
             soundOnIcon.classList.toggle('hidden', isMuted);
             soundOffIcon.classList.toggle('hidden', !isMuted);
         });
+
+        // Modal event listeners
+        howToPlayButton.addEventListener('click', showModal);
+        closeModalButton.addEventListener('click', hideModal);
+        howToPlayModal.addEventListener('click', (e) => {
+            if (e.target === howToPlayModal) {
+                hideModal();
+            }
+        });
+
 
         // Canvas drawing events
         canvas.addEventListener('mousedown', (e) => startDrawing(e.offsetX, e.offsetY));
