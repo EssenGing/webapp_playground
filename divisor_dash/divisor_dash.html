@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>約数タイムアタック</title>
+    <title>素早くタッチ！約数タイムアタック</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
     <style>
@@ -78,6 +78,36 @@
             50% { transform: scale(1.1); }
         }
         .animate-celebrate { animation: celebrate-text 1s ease-in-out infinite; }
+
+        /* ポップアップ用のスタイル */
+        .modal-enter {
+            opacity: 0;
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transition: opacity 200ms ease-out;
+        }
+        .modal-leave {
+            opacity: 1;
+        }
+        .modal-leave-active {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .modal-content-enter {
+            transform: scale(0.95);
+        }
+        .modal-content-enter-active {
+            transform: scale(1);
+            transition: transform 200ms ease-out;
+        }
+        .modal-content-leave {
+            transform: scale(1);
+        }
+        .modal-content-leave-active {
+            transform: scale(0.95);
+            transition: transform 200ms ease-in;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen">
@@ -93,7 +123,7 @@
 
         <!-- スタート画面 -->
         <div id="start-screen" class="screen space-y-4 sm:space-y-6">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-indigo-600">約数タイムアタック</h1>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-indigo-600">急いでタッチ！<br>約数タイムアタック</h1>
             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
                 <div class="text-left max-w-md mx-auto space-y-2 text-gray-600 mb-6 text-sm sm:text-base">
                     <p>🚀 お題の数の約数をすべて見つけるゲームだよ。</p>
@@ -112,6 +142,10 @@
 
                 <button id="start-button" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl sm:text-3xl btn-3d">
                     スタート！
+                </button>
+                <!-- 遊び方ボタンを追加 -->
+                <button id="how-to-play-button" class="mt-4 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 rounded-lg text-lg btn-3d" style="box-shadow: 0 6px 0 #4b5563;">
+                    あそびかた
                 </button>
                 <p class="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">効果音：OtoLogic</p>
             </div>
@@ -181,6 +215,25 @@
         </div>
     </div>
 
+    <!-- あそびかたモーダル -->
+    <div id="how-to-play-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 modal-enter">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg text-left relative modal-content-enter">
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center">あそびかた</h2>
+            <div class="space-y-4 text-gray-700 text-base sm:text-lg">
+                <p><span class="font-bold text-indigo-500">① 問題数をえらぶ</span><br>最初に挑戦する問題数をえらんで「スタート！」を押してね。</p>
+                <p><span class="font-bold text-indigo-500">② 約数をさがす</span><br>画面の上に表示される「お題」の数を割り切れる数字（＝約数）を、下のカードからすべてタッチ！</p>
+                <p><span class="font-bold text-indigo-500">③ 早く正確に解こう</span><br>すべての約数を見つけられると次の問題に進むよ。全問解き終わる時間を競おう！</p>
+                <p><span class="font-bold text-red-500">⚠️ ペナルティ</span><br>まちがった数字をえらぶと、1回につき<span class="font-bold">3秒のペナルティタイム</span>が追加されるから気をつけて！</p>
+                <p><span class="font-bold text-green-500">🆚 家族やお友達と勝負</span><br>ゲーム終わったら「同じ問題をやる」を押すと今と全く同じ問題が出題されるから家族やお友達とタイムを勝負することができるよ。</p>
+                <p><span class="font-bold text-black-500 text-center">さあ、楽しく約数をマスターだ！</span></p>
+            </div>
+            <button id="close-modal-button" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg text-lg btn-3d">
+                わかった！
+            </button>
+        </div>
+    </div>
+
+
     <audio id="correct-sound" src="correct.mp3" preload="auto"></audio>
     <audio id="incorrect-sound" src="incorrect.mp3" preload="auto"></audio>
 
@@ -202,6 +255,13 @@
         const muteButton = document.getElementById('mute-button');
         const soundOnIcon = document.getElementById('sound-on-icon');
         const soundOffIcon = document.getElementById('sound-off-icon');
+
+        // ポップアップ関連の要素
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const howToPlayModal = document.getElementById('how-to-play-modal');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const modalContent = document.getElementById('modal-content');
+
 
         // 結果画面の要素
         const restartButton = document.getElementById('restart-button');
@@ -227,6 +287,24 @@
         const PENALTY_PER_MISTAKE = 3;
         let problemSet = []; // 問題のセットを保存する配列
         let isMuted = false;
+
+        // --- ポップアップ表示/非表示関数 ---
+        function showModal() {
+            howToPlayModal.classList.remove('hidden');
+            setTimeout(() => {
+                howToPlayModal.classList.remove('modal-enter', 'modal-content-enter');
+                howToPlayModal.classList.add('modal-enter-active', 'modal-content-enter-active');
+            }, 10);
+        }
+
+        function hideModal() {
+            howToPlayModal.classList.remove('modal-enter-active', 'modal-content-enter-active');
+            howToPlayModal.classList.add('modal-leave', 'modal-content-leave');
+            setTimeout(() => {
+                howToPlayModal.classList.add('hidden');
+                howToPlayModal.classList.remove('modal-leave', 'modal-content-leave');
+            }, 200);
+        }
 
         // イベントリスナーの設定
         startButton.addEventListener('click', () => startGame(false));
@@ -255,6 +333,17 @@
             soundOnIcon.classList.toggle('hidden', isMuted);
             soundOffIcon.classList.toggle('hidden', !isMuted);
         });
+
+        // ポップアップのイベントリスナー
+        howToPlayButton.addEventListener('click', showModal);
+        closeModalButton.addEventListener('click', hideModal);
+        howToPlayModal.addEventListener('click', (e) => {
+            // モーダルの背景をクリックしたときに閉じる
+            if (e.target === howToPlayModal) {
+                hideModal();
+            }
+        });
+
 
         /**
          * 約数の配列を取得する関数
