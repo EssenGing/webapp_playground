@@ -179,7 +179,12 @@
                 <div class="my-3 sm:my-4 relative">
                     <label class="font-bold text-left block mb-2 text-gray-600 text-base sm:text-lg">こたえをかいてみよう！</label>
                     <canvas id="handwriting-canvas" class="bg-white border-2 border-gray-300 rounded-lg w-full h-36 sm:h-56 cursor-crosshair touch-none"></canvas>
-                    <button id="clear-canvas-btn" class="mt-3 w-full sm:w-1/2 mx-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 rounded-lg btn-3d text-base sm:text-lg">けす</button>
+                    <div class="mt-3 w-full sm:w-3/4 lg:w-1/2 mx-auto relative flex justify-center items-center">
+                        <!-- "けす" button (center) -->
+                        <button id="clear-canvas-btn" class="w-3/4 sm:w-2/3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 sm:py-4 rounded-lg btn-3d text-lg sm:text-xl">けす</button>
+                        <!-- "パス" button (left) -->
+                        <button id="pass-btn" class="absolute left-0 sm:-ml-20 bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 sm:py-4 px-5 rounded-lg btn-3d text-base">パス</button>
+                    </div>
                 </div>
                 <button id="quit-practice-btn" class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 sm:py-4 rounded-lg text-lg sm:text-2xl btn-3d w-full mt-4">ゲームをやめる</button>
             </div>
@@ -242,6 +247,7 @@
         const questionDisplay = document.getElementById('question-display');
         const monsterArea = document.getElementById('monster-area');
         const correctBtn = document.getElementById('correct-btn');
+        const passBtn = document.getElementById('pass-btn');
         const retryBtn = document.getElementById('retry-btn');
         const nextBtn = document.getElementById('next-btn');
         const handwritingCanvas = document.getElementById('handwriting-canvas');
@@ -444,6 +450,7 @@
             if (isPracticeMode) {
                 correctBtn.classList.add('hidden');
                 retryBtn.classList.add('hidden');
+                passBtn.classList.add('hidden');
                 nextBtn.classList.remove('hidden');
                 quitPracticeBtn.classList.remove('hidden');
                 livesArea.classList.add('hidden');
@@ -452,6 +459,7 @@
             } else {
                 correctBtn.classList.remove('hidden');
                 retryBtn.classList.remove('hidden');
+                passBtn.classList.remove('hidden');
                 nextBtn.classList.add('hidden');
                 quitPracticeBtn.classList.add('hidden');
                 livesArea.classList.remove('hidden');
@@ -606,6 +614,31 @@
                 } else {
                     nextTurn();
                 }
+            }, { once: true });
+        }
+
+        function handlePass() {
+            stopTimer();
+            if (buttonsDisabled || currentQuestionIndex >= currentQuestions.length) return;
+            buttonsDisabled = true;
+            playSound('incorrect');
+
+            currentQuestions[currentQuestionIndex].result = 'incorrect';
+            mistakes++;
+            updateLives();
+
+            if (mistakes >= MAX_MISTAKES) {
+                setTimeout(showGameOverScreen, 500);
+                return;
+            }
+
+            const monsterEl = monsterArea.querySelector('div');
+            monsterEl?.classList.add('animate-shake');
+            monsterEl?.addEventListener('animationend', () => {
+                monsterEl.classList.remove('animate-shake');
+                currentQuestionIndex++;
+                // パスした場合は、次の問題を表示するだけ
+                displayQuestion();
             }, { once: true });
         }
 
@@ -926,6 +959,7 @@
         });
 
         correctBtn.addEventListener('click', handleCorrect);
+        passBtn.addEventListener('click', handlePass);
         retryBtn.addEventListener('click', handleRetry);
 
         nextBtn.addEventListener('click', () => {
@@ -994,3 +1028,10 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
