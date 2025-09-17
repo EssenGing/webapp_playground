@@ -216,6 +216,7 @@
 
     </div>
 
+    <script src="questions.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- DOM Elements ---
@@ -259,18 +260,6 @@
         const createIncorrectDeckClearBtn = document.getElementById('create-incorrect-deck-clear-btn');
         const createIncorrectDeckGameoverBtn = document.getElementById('create-incorrect-deck-gameover-btn');
         const quitPracticeBtn = document.getElementById('quit-practice-btn');
-
-
-        // --- Default Decks ---
-        const defaultDecks = [
-            { name: '1年生のかんじ', category: '小学1年生', isDefault: true, questions: [{q:"山", a:"やま"}, {q:"川", a:"かわ"}, {q:"日", a:"ひ"}, {q:"月", a:"つき"}, {q:"木", a:"き"}] },
-            { name: '2年生のかんじ', category: '小学2年生', isDefault: true, questions: [{q:"時", a:"とき"}, {q:"曜", a:"よう"}, {q:"週", a:"しゅう"}, {q:"春", a:"はる"}, {q:"夏", a:"なつ"}] },
-            { name: '3年生のかんじ', category: '小学3年生', isDefault: true, questions: [{q:"都", a:"みやこ"}, {q:"県", a:"けん"}, {q:"市", a:"し"}, {q:"駅", a:"えき"}, {q:"店", a:"みせ"}] },
-            { name: '4年生のかんじ', category: '小学4年生', isDefault: true, questions: [{q:"席", a:"せき"}, {q:"窓", a:"まど"}, {q:"軍", a:"ぐん"}, {q:"兵", a:"へい"}, {q:"臣", a:"しん"}] },
-            { name: '5年生のかんじ', category: '小学5年生', isDefault: true, questions: [{q:"政", a:"せい"}, {q:"治", a:"じ"}, {q:"経", a:"けい"}, {q:"済", a:"ざい"}, {q:"歴", a:"れき"}] },
-            { name: '6年生のかんじ', category: '小学6年生', isDefault: true, questions: [{q:"憲", a:"けん"}, {q:"法", a:"ほう"}, {q:"裁", a:"さい"}, {q:"判", a:"ばん"}, {q:"皇", a:"こう"}] },
-            { name: 'どうぶつクイズ', category: 'その他', isDefault: true, questions: [{q:"世界で一番大きな動物は？", a:"シロナガスクジラ"}, {q:"首が一番長い動物は？", a:"キリン"}, {q:"鼻が長い動物は？", a:"ゾウ"}] },
-        ];
 
         // --- Game State ---
         let allDecks = [];
@@ -326,8 +315,9 @@
 
         // --- Deck Management ---
         function loadAndCombineDecks() {
+            // questions.jsから読み込んだ defaultDecksData を使用する
             const userDecks = JSON.parse(localStorage.getItem('monsterDecks')) || [];
-            allDecks = [...defaultDecks, ...userDecks];
+            allDecks = [...defaultDecksData, ...userDecks];
         }
 
         function saveUserDecks() {
@@ -1028,10 +1018,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
 
