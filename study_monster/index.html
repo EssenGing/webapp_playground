@@ -386,14 +386,22 @@
                 deckNameInput.value = '';
                 tempQuestions = [];
                 currentDeckIndex = -1;
+                deckNameInput.disabled = false; // Ensure it's enabled for new decks
             } else { // Edit Deck
                 const deck = allDecks[index];
                 if (deck.isDefault) {
                     deckNameInput.value = deck.name + 'のコピー';
                     currentDeckIndex = -1; // Treat as new deck
+                    deckNameInput.disabled = false; // Enabled for copies
                 } else {
                     deckNameInput.value = deck.name;
                     currentDeckIndex = index;
+                    // Disable name input if it's an incorrect questions deck
+                    if (deck.category === 'まちがえた問題') {
+                        deckNameInput.disabled = true;
+                    } else {
+                        deckNameInput.disabled = false;
+                    }
                 }
                 tempQuestions = JSON.parse(JSON.stringify(deck.questions));
             }
@@ -926,7 +934,15 @@
         saveDeckBtn.addEventListener('click', () => {
             const name = deckNameInput.value.trim();
             if (!name) { alert('デッキのなまえをいれてください。'); return; }
-            const newDeck = { name, questions: tempQuestions, isDefault: false, category: 'じぶんのデッキ' };
+
+            let deckCategory = 'じぶんのデッキ';
+            // If editing an existing, non-default deck, keep its category
+            if (currentDeckIndex !== -1 && allDecks[currentDeckIndex] && !allDecks[currentDeckIndex].isDefault) {
+                deckCategory = allDecks[currentDeckIndex].category;
+            }
+
+            const newDeck = { name, questions: tempQuestions, isDefault: false, category: deckCategory };
+
             if (currentDeckIndex === -1 || allDecks[currentDeckIndex]?.isDefault) {
                 allDecks.push(newDeck);
             } else {
@@ -934,7 +950,7 @@
             }
             saveUserDecks();
             loadAndCombineDecks();
-            selectedCategory = 'じぶんのデッキ';
+            selectedCategory = deckCategory; // Select the correct category tab
             renderDeckSelectionScreen();
             showScreen('deckSelection');
         });
@@ -1031,4 +1047,5 @@
     </script>
 </body>
 </html>
+
 
