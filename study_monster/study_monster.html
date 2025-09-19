@@ -92,6 +92,10 @@
 
         <!-- Deck Selection Screen -->
         <div id="deck-selection-screen" class="space-y-4 sm:space-y-6">
+            <a href="https://manameba.com/" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-slate-400 hover:text-slate-600 transition-colors z-10 text-sm flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m15 18-6-6 6-6"/></svg>
+                <span>ホームにもどる</span>
+            </a>
             <h1 class="text-3xl sm:text-5xl font-extrabold text-amber-600">書いて答えて<br>モンスターをたおせ！</h1>
             <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
                 <h2 class="text-xl sm:text-3xl font-bold mb-4 sm:mb-6">デッキをえらんでね</h2>
@@ -326,7 +330,17 @@
         }
 
         function renderDeckSelectionScreen() {
-            const categories = ['小学1年生', '小学2年生', '小学3年生', '小学4年生', '小学5年生', '小学6年生', 'その他', 'じぶんのデッキ', 'まちがえた問題'];
+            const categories = [
+                '小学1年生',
+                // '小学2年生',
+                // '小学3年生',
+                // '小学4年生',
+                '小学5年生',
+                // '小学6年生',
+                'その他',
+                'じぶんのデッキ',
+                'まちがえた問題'
+            ];
             deckCategoryTabs.innerHTML = categories.map(cat => `
                 <button data-category="${cat}" class="category-tab px-3 py-2 text-sm sm:text-base sm:px-4 rounded-lg font-bold bg-gray-200 hover:bg-cyan-300 ${selectedCategory === cat ? 'active' : ''}">
                     ${cat}
