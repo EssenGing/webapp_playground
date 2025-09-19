@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時計を読もう</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            touch-action: none; /* Disable pull-to-refresh on mobile */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .clock-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 2rem auto;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 4px solid #334155;
+            box-shadow:
+                inset 0 0 10px rgba(0, 0, 0, 0.2),
+                0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #334155;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .hour-hand, .minute-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 5px;
+            background: #334155;
+        }
+        .hour-hand {
+            width: 8px;
+            height: 75px;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        .minute-hand {
+            width: 6px;
+            height: 105px;
+            background: #475569;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        .time-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #334155;
+        }
+        .buttons-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #d1d5db;
+            color: #334155;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-50px);
+            transition: transform 0.3s;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        .disabled-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 15;
+            display: none;
+        }
+        .disabled-overlay.active {
+            display: block;
+        }
+        .number-marker {
+            position: absolute;
+            font-weight: bold;
+            color: #334155;
+            transform: translate(-50%, -50%);
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="start-screen" class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">時計を読もう</h1>
+        <p class="text-gray-600 mb-6">練習したいモードと問題数を選んでね！</p>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">モード選択</h2>
+            <div class="buttons-container">
+                <button id="mode-analog-input" class="btn btn-secondary">アナログから入力</button>
+                <button id="mode-digital-set" class="btn btn-secondary">デジタルから針を動かす</button>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">問題数</h2>
+            <div class="buttons-container">
+                <button class="btn btn-secondary question-count" data-count="3">3問</button>
+                <button class="btn btn-secondary question-count" data-count="5">5問</button>
+                <button class="btn btn-secondary question-count" data-count="10">10問</button>
+            </div>
+        </div>
+
+        <button id="start-game" class="btn btn-primary w-full mt-4">スタート</button>
+    </div>
+
+    <div id="game-screen" class="container hidden">
+        <div class="flex justify-between items-center mb-4 text-gray-600">
+            <span id="question-info" class="font-semibold"></span>
+            <span id="timer">00:00</span>
+        </div>
+        <div id="clock-display" class="flex flex-col items-center">
+            <div id="target-time" class="time-display hidden mb-4"></div>
+            <div class="clock-container" id="analog-clock">
+                <div class="disabled-overlay" id="clock-overlay"></div>
+                <div class="minute-hand" id="minute-hand"></div>
+                <div class="hour-hand" id="hour-hand"></div>
+                <div class="clock-center"></div>
+                <!-- Clock numbers will be generated by JS -->
+            </div>
+        </div>
+
+        <div id="input-section" class="flex flex-col items-center mt-6">
+            <div id="dropdown-input" class="flex items-center gap-2 hidden">
+                <select id="hour-select" class="p-2 rounded-lg border border-gray-300 text-lg font-semibold">
+                    <!-- Hours will be populated by JS -->
+                </select>
+                <span class="text-2xl font-bold">:</span>
+                <select id="minute-select" class="p-2 rounded-lg border border-gray-300 text-lg font-semibold">
+                    <!-- Minutes will be populated by JS -->
+                </select>
+            </div>
+            <button id="submit-answer" class="btn btn-primary mt-6">OK</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="container hidden">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">結果</h2>
+        <p id="total-time" class="text-2xl font-bold text-gray-600 mb-2"></p>
+        <p id="correct-count" class="text-xl text-gray-500 mb-6"></p>
+        <div class="flex gap-4 justify-center">
+            <button id="restart-game" class="btn btn-primary">もう一度</button>
+            <button id="back-to-menu" class="btn btn-secondary">問題選択に戻る</button>
+        </div>
+    </div>
+
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-xl font-semibold mb-4 text-gray-800"></p>
+            <button id="modal-close" class="btn btn-primary">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startButton = document.getElementById('start-game');
+        const restartButton = document.getElementById('restart-game');
+        const backToMenuButton = document.getElementById('back-to-menu');
+        const modeAnalogInputBtn = document.getElementById('mode-analog-input');
+        const modeDigitalSetBtn = document.getElementById('mode-digital-set');
+        const questionCountBtns = document.querySelectorAll('.question-count');
+        const questionInfo = document.getElementById('question-info');
+        const timerDisplay = document.getElementById('timer');
+        const targetTimeDisplay = document.getElementById('target-time');
+        const analogClock = document.getElementById('analog-clock');
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const dropdownInput = document.getElementById('dropdown-input');
+        const hourSelect = document.getElementById('hour-select');
+        const minuteSelect = document.getElementById('minute-select');
+        const submitButton = document.getElementById('submit-answer');
+        const clockOverlay = document.getElementById('clock-overlay');
+        const messageModal = document.getElementById('message-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close');
+
+        // Game State
+        let gameMode = '';
+        let questionCount = 0;
+        let currentQuestion = 0;
+        let startTime = 0;
+        let timerInterval;
+        let correctAnswers = 0;
+        let currentHour = 0;
+        let currentMinute = 0;
+
+        // Dragging State
+        let isDragging = false;
+        let dragHour = 12;
+        let dragMinute = 0;
+
+        // --- Core Functions ---
+        function showScreen(screenId) {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showMessage(message) {
+            modalMessage.textContent = message;
+            messageModal.classList.add('active');
+        }
+
+        function generateTime() {
+            currentHour = Math.floor(Math.random() * 12) + 1;
+            currentMinute = Math.floor(Math.random() * 12) * 5; // 5-minute increments
+        }
+
+        function setClockHands(h, m) {
+            const hourDeg = (h % 12) * 30 + (m / 60) * 30;
+            const minuteDeg = m * 6;
+            hourHand.style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+            minuteHand.style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+                const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion > questionCount) {
+                endGame();
+                return;
+            }
+
+            questionInfo.textContent = `問題 ${currentQuestion} / ${questionCount}`;
+            generateTime();
+
+            if (gameMode === 'digital-set') {
+                targetTimeDisplay.textContent = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+                targetTimeDisplay.classList.remove('hidden');
+                dropdownInput.classList.add('hidden');
+                clockOverlay.classList.remove('active');
+                 // Reset clock to 12:00 for the user to set
+                setClockHands(12, 0);
+                dragHour = 12;
+                dragMinute = 0;
+            } else { // analog-input
+                targetTimeDisplay.classList.add('hidden');
+                dropdownInput.classList.remove('hidden');
+                setClockHands(currentHour, currentMinute);
+                clockOverlay.classList.add('active');
+                hourSelect.value = '';
+                minuteSelect.value = '';
+            }
+        }
+
+        function checkAnswer() {
+             let userAnswer = '';
+             if (gameMode === 'digital-set') {
+                userAnswer = `${String(dragHour).padStart(2, '0')}:${String(dragMinute).padStart(2, '0')}`;
+            } else { // analog-input
+                const selectedHour = hourSelect.value;
+                const selectedMinute = minuteSelect.value;
+                if (!selectedHour || !selectedMinute) {
+                    showMessage('時間と分を両方選んでください。');
+                    return false; // Indicate failure to check
+                }
+                userAnswer = `${String(selectedHour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
+            }
+
+            const correctTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+            if (userAnswer === correctTime) {
+                correctAnswers++;
+                showMessage('正解！');
+            } else {
+                showMessage(`残念！正解は ${correctTime} でした`);
+            }
+            return true; // Indicate success
+        }
+
+
+        function endGame() {
+            stopTimer();
+            showScreen('result-screen');
+            const finalTime = timerDisplay.textContent;
+            document.getElementById('total-time').textContent = `かかった時間: ${finalTime}`;
+            document.getElementById('correct-count').textContent = `正解数: ${correctAnswers} / ${questionCount} 問`;
+        }
+
+        function resetGame() {
+            gameMode = '';
+            questionCount = 0;
+            modeAnalogInputBtn.classList.replace('btn-primary', 'btn-secondary');
+            modeDigitalSetBtn.classList.replace('btn-primary', 'btn-secondary');
+            questionCountBtns.forEach(b => b.classList.replace('btn-primary', 'btn-secondary'));
+            showScreen('start-screen');
+        }
+
+        // --- Clock Face Generation ---
+        function initializeClockFace() {
+            const clock = document.getElementById('analog-clock');
+            // Clear existing numbers before adding new ones
+            clock.querySelectorAll('.number-marker').forEach(n => n.remove());
+            const radius = clock.offsetWidth / 2 * 0.85;
+            const center = clock.offsetWidth / 2;
+
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i - 3) * (Math.PI / 6); // Angle for number i
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+
+                const number = document.createElement('div');
+                number.className = 'number-marker';
+                number.textContent = i;
+                number.style.left = `${x}px`;
+                number.style.top = `${y}px`;
+                clock.appendChild(number);
+            }
+        }
+
+        // --- Populate dropdowns ---
+        for (let i = 1; i <= 12; i++) {
+            hourSelect.add(new Option(String(i).padStart(2, '0'), i));
+        }
+        for (let i = 0; i < 60; i += 5) {
+            minuteSelect.add(new Option(String(i).padStart(2, '0'), i));
+        }
+
+        // --- Event Listeners ---
+        modeAnalogInputBtn.addEventListener('click', () => {
+            gameMode = 'analog-input';
+            modeAnalogInputBtn.classList.replace('btn-secondary', 'btn-primary');
+            modeDigitalSetBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+
+        modeDigitalSetBtn.addEventListener('click', () => {
+            gameMode = 'digital-set';
+            modeDigitalSetBtn.classList.replace('btn-secondary', 'btn-primary');
+            modeAnalogInputBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+
+        questionCountBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                questionCountBtns.forEach(b => b.classList.replace('btn-primary', 'btn-secondary'));
+                btn.classList.replace('btn-secondary', 'btn-primary');
+                questionCount = parseInt(btn.dataset.count, 10);
+            });
+        });
+
+        startButton.addEventListener('click', () => {
+            if (!gameMode || questionCount === 0) {
+                showMessage('モードと問題数を選んでください。');
+                return;
+            }
+
+            showScreen('game-screen');
+
+            // Re-initialize clock face in case it hasn't been done correctly
+            initializeClockFace();
+
+            currentQuestion = 0;
+            correctAnswers = 0;
+            startTimer();
+            nextQuestion();
+        });
+
+        restartButton.addEventListener('click', () => {
+            showScreen('game-screen');
+            currentQuestion = 0;
+            correctAnswers = 0;
+            startTimer();
+            nextQuestion();
+        });
+
+        backToMenuButton.addEventListener('click', resetGame);
+
+        submitButton.addEventListener('click', () => {
+            if (checkAnswer()) {
+                // If answer was checked, wait for modal to close
+            }
+        });
+
+        modalCloseBtn.addEventListener('click', () => {
+            messageModal.classList.remove('active');
+             if (currentQuestion >= questionCount) {
+                endGame();
+            } else {
+                nextQuestion();
+            }
+        });
+
+        // --- Dragging Logic ---
+        function updateClockHandsOnDrag(e) {
+            if (!isDragging) return;
+            const rect = analogClock.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - centerX;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - centerY;
+
+            const angleRad = Math.atan2(y, x);
+            const angleDeg = (angleRad * 180 / Math.PI) + 90;
+
+            const newMinute = Math.round(((angleDeg + 360) % 360) / 6) % 60;
+
+            // More robust hour change detection by checking quadrants.
+            const prevWasTopRight = dragMinute < 15;
+            const prevWasTopLeft = dragMinute > 45;
+            const newIsTopRight = newMinute < 15;
+            const newIsTopLeft = newMinute > 45;
+
+            // Clockwise wrap: from top-left (e.g., 50 min) to top-right (e.g., 5 min)
+            if (prevWasTopLeft && newIsTopRight) {
+                dragHour = (dragHour % 12) + 1; // Increment hour (e.g., 12 -> 1)
+            }
+            // Counter-clockwise wrap: from top-right (e.g., 5 min) to top-left (e.g., 50 min)
+            else if (prevWasTopRight && newIsTopLeft) {
+                // This formula handles wrapping from 1 -> 12 correctly
+                dragHour = ((dragHour - 2 + 12) % 12) + 1; // Decrement hour
+            }
+
+            dragMinute = newMinute;
+
+            setClockHands(dragHour, dragMinute);
+        }
+
+        function startDrag(e) {
+            if (gameMode !== 'digital-set' || clockOverlay.classList.contains('active')) return;
+            e.preventDefault();
+            isDragging = true;
+            updateClockHandsOnDrag(e);
+        }
+
+        function endDrag() {
+            isDragging = false;
+        }
+
+        analogClock.addEventListener('mousedown', startDrag);
+        analogClock.addEventListener('mousemove', updateClockHandsOnDrag);
+        document.addEventListener('mouseup', endDrag);
+        analogClock.addEventListener('mouseleave', endDrag);
+
+        analogClock.addEventListener('touchstart', startDrag, { passive: false });
+        analogClock.addEventListener('touchmove', updateClockHandsOnDrag, { passive: false });
+        analogClock.addEventListener('touchend', endDrag);
+    </script>
+</body>
+</html>
+
