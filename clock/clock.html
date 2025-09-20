@@ -119,12 +119,33 @@
             border: 2px dashed #fbbf24; /* amber-400 */
         }
         .stamp-pop {
-            animation: pop 1.2s ease-out;
+            animation: pop 0.8s ease-out;
         }
         @keyframes pop {
             0% { transform: scale(0.5); opacity: 0; }
             70% { transform: scale(1.1); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
+        }
+        /* Picker styles */
+        .picker-wheel-wrapper {
+            height: 144px; /* item height * 3 */
+            width: 80px;
+            overflow: hidden;
+            touch-action: none; /* Prevent browser scrolling on picker */
+        }
+        .picker-wheel {
+            /* transform will be set by JS */
+            /* transition will be set by JS */
+        }
+        .picker-item {
+            height: 48px; /* Should match the highlight box height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #475569; /* slate-600 */
+            user-select: none; /* Prevent text selection */
         }
     </style>
 </head>
@@ -184,10 +205,18 @@
             </div>
 
             <div id="input-section" class="flex flex-col items-center mt-6">
-                <div id="dropdown-input" class="flex items-center gap-2 hidden">
-                    <select id="hour-select" class="p-2 rounded-lg border-2 border-gray-300 text-lg font-semibold"></select>
-                    <span class="text-2xl font-bold">:</span>
-                    <select id="minute-select" class="p-2 rounded-lg border-2 border-gray-300 text-lg font-semibold"></select>
+                <!-- Drum-roll Picker -->
+                <div id="picker-input" class="w-full max-w-xs h-36 flex items-center justify-center gap-2 hidden relative cursor-grab">
+                    <div class="absolute inset-0 flex items-center pointer-events-none">
+                        <div class="h-12 w-full bg-gray-200/50 border-y-2 border-gray-300 rounded-lg"></div>
+                    </div>
+                    <div class="picker-wheel-wrapper">
+                        <div class="picker-wheel" id="hour-picker"></div>
+                    </div>
+                    <span class="text-4xl font-bold text-gray-700 z-10">:</span>
+                    <div class="picker-wheel-wrapper">
+                        <div class="picker-wheel" id="minute-picker"></div>
+                    </div>
                 </div>
                 <button id="submit-answer" class="btn-3d w-full max-w-xs bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-lg text-2xl mt-6" style="box-shadow: 0 6px 0 #0891b2;">OK</button>
             </div>
@@ -232,7 +261,7 @@
         const gameScreen = document.getElementById('game-screen');
         const resultScreen = document.getElementById('result-screen');
         const stampCardScreen = document.getElementById('stamp-card-screen');
-
+        const pickerInput = document.getElementById('picker-input');
 
         const nextToQCountButton = document.getElementById('next-to-q-count');
         const backToModeButton = document.getElementById('back-to-mode');
@@ -240,7 +269,6 @@
         const showStampCardButton = document.getElementById('show-stamp-card');
         const backToMenuFromStampButton = document.getElementById('back-to-menu-from-stamp');
         const viewStampsFromResultButton = document.getElementById('view-stamps-from-result');
-
 
         const modeBtns = document.querySelectorAll('.mode-btn');
         const questionCountBtns = document.querySelectorAll('.question-count');
@@ -250,9 +278,6 @@
         const analogClock = document.getElementById('analog-clock');
         const hourHand = document.getElementById('hour-hand');
         const minuteHand = document.getElementById('minute-hand');
-        const dropdownInput = document.getElementById('dropdown-input');
-        const hourSelect = document.getElementById('hour-select');
-        const minuteSelect = document.getElementById('minute-select');
         const submitButton = document.getElementById('submit-answer');
         const clockOverlay = document.getElementById('clock-overlay');
         const messageModal = document.getElementById('message-modal');
@@ -276,9 +301,7 @@
         // localStorage Key
         const STAMP_COUNT_KEY = 'clockGameCorrectCount';
 
-        // Initialize previous count on script load
         previousTotalCorrectCount = getTotalCorrectCount();
-
 
         // Dragging State
         let isDragging = false;
@@ -314,21 +337,17 @@
             const totalCount = getTotalCorrectCount();
             const maxStamps = 50;
             totalCorrectCountSpan.textContent = totalCount;
-            stampGrid.innerHTML = ''; // Clear existing stamps
+            stampGrid.innerHTML = '';
 
-            // Create all slots and fill them based on their status
             for (let i = 0; i < maxStamps; i++) {
                 const stampElement = document.createElement('div');
                 stampElement.className = 'stamp-slot flex items-center justify-center bg-yellow-200/50 rounded';
-
                 if (i < previousTotalCorrectCount) {
-                    // Instantly show stamps earned before this session
                     const innerStamp = document.createElement('span');
                     innerStamp.className = 'stamp';
                     innerStamp.textContent = '💮';
                     stampElement.appendChild(innerStamp);
                 } else {
-                    // Show numbers for new or future slots
                     const numberSpan = document.createElement('span');
                     numberSpan.className = 'text-sm text-amber-500 font-bold';
                     numberSpan.textContent = i + 1;
@@ -337,7 +356,6 @@
                 stampGrid.appendChild(stampElement);
             }
 
-            // Animate the new stamps
             const stampSlots = stampGrid.children;
             let animationDelay = 300; // ms
             for (let i = previousTotalCorrectCount; i < totalCount && i < maxStamps; i++) {
@@ -352,11 +370,8 @@
                     }
                 }, (i - previousTotalCorrectCount + 1) * animationDelay);
             }
-
-            // Update the previous count so it doesn't re-animate next time without playing
             previousTotalCorrectCount = totalCount;
         }
-
 
         function generateTime() {
             currentHour = Math.floor(Math.random() * 12) + 1;
@@ -395,18 +410,18 @@
             if (gameMode === 'digital-set') {
                 targetTimeDisplay.textContent = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
                 targetTimeDisplay.classList.remove('hidden');
-                dropdownInput.classList.add('hidden');
+                pickerInput.classList.add('hidden');
                 clockOverlay.classList.remove('active');
                 setClockHands(12, 0);
                 dragHour = 12;
                 dragMinute = 0;
             } else { // analog-input
                 targetTimeDisplay.classList.add('hidden');
-                dropdownInput.classList.remove('hidden');
+                pickerInput.classList.remove('hidden');
                 setClockHands(currentHour, currentMinute);
                 clockOverlay.classList.add('active');
-                hourSelect.value = '';
-                minuteSelect.value = '';
+                hourPickerControl.reset();
+                minutePickerControl.reset();
             }
         }
 
@@ -415,9 +430,9 @@
              if (gameMode === 'digital-set') {
                 userAnswer = `${String(dragHour).padStart(2, '0')}:${String(dragMinute).padStart(2, '0')}`;
             } else {
-                const selectedHour = hourSelect.value;
-                const selectedMinute = minuteSelect.value;
-                if (!selectedHour || !selectedMinute) {
+                const selectedHour = hourPickerControl.getValue();
+                const selectedMinute = minutePickerControl.getValue();
+                 if (!selectedHour || !selectedMinute) {
                     showMessage('時間と分を両方選んでください。');
                     return false;
                 }
@@ -427,7 +442,7 @@
             const correctTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
             if (userAnswer === correctTime) {
                 correctAnswers++;
-                addCorrectCount(); // Add to total correct count
+                addCorrectCount();
                 showMessage('正解！');
             } else {
                 showMessage(`ざんねん！正解は ${correctTime}`);
@@ -441,14 +456,6 @@
             const finalTime = timerDisplay.textContent;
             document.getElementById('total-time').textContent = `かかった時間: ${finalTime}`;
             document.getElementById('correct-count').textContent = `正解数: ${correctAnswers} / ${questionCount} 問`;
-        }
-
-        function resetGame() {
-            gameMode = '';
-            questionCount = 0;
-            modeBtns.forEach(b => b.classList.remove('selected'));
-            questionCountBtns.forEach(b => b.classList.remove('selected'));
-            showScreen('mode-selection-screen');
         }
 
         function initializeClockFace() {
@@ -472,9 +479,74 @@
             }
         }
 
-        // Populate dropdowns
-        for (let i = 1; i <= 12; i++) { hourSelect.add(new Option(String(i).padStart(2, '0'), i)); }
-        for (let i = 0; i < 60; i += 5) { minuteSelect.add(new Option(String(i).padStart(2, '0'), i)); }
+        // --- Picker (Drum Roll) Functions ---
+        function setupPicker(wheelId, values) {
+            const wheelElement = document.getElementById(wheelId);
+            const wrapperElement = wheelElement.parentElement;
+            const itemHeight = 48;
+            const wrapperHeight = 144;
+
+            // Populate wheel
+            wheelElement.innerHTML = '';
+            const paddedValues = ['', ...values, ''];
+            paddedValues.forEach(value => {
+                const item = document.createElement('div');
+                item.className = 'picker-item';
+                item.textContent = String(value).padStart(2, '0');
+                wheelElement.appendChild(item);
+            });
+
+            let isDragging = false, startY, startTranslateY, currentTranslateY = 0;
+
+            function setTranslateY(y, transition = true) {
+                currentTranslateY = y;
+                wheelElement.style.transition = transition ? 'transform 0.3s ease-out' : 'none';
+                wheelElement.style.transform = `translateY(${y}px)`;
+            }
+
+            setTranslateY(itemHeight); // Initial position
+
+            const onStart = (e) => {
+                isDragging = true;
+                startY = e.touches ? e.touches[0].clientY : e.clientY;
+                startTranslateY = currentTranslateY;
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+                const deltaY = currentY - startY;
+                setTranslateY(startTranslateY + deltaY, false);
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                let selectedIndex = Math.round(currentTranslateY / itemHeight);
+                selectedIndex = Math.min(1, Math.max(-(values.length), selectedIndex));
+
+                setTranslateY(selectedIndex * itemHeight);
+            };
+
+            ['mousedown', 'touchstart'].forEach(evt => wrapperElement.addEventListener(evt, onStart));
+            ['mousemove', 'touchmove'].forEach(evt => window.addEventListener(evt, onMove));
+            ['mouseup', 'mouseleave', 'touchend'].forEach(evt => window.addEventListener(evt, onEnd));
+
+            return {
+                getValue: () => {
+                    let selectedIndex = Math.abs(Math.round(currentTranslateY / itemHeight) - 1);
+                    return values[selectedIndex];
+                },
+                reset: () => setTranslateY(itemHeight)
+            };
+        }
+
+        const hourValues = Array.from({length: 12}, (_, i) => i + 1);
+        const minuteValues = Array.from({length: 12}, (_, i) => i * 5);
+        const hourPickerControl = setupPicker('hour-picker', hourValues);
+        const minutePickerControl = setupPicker('minute-picker', minuteValues);
 
         // --- Event Listeners ---
         modeBtns.forEach(btn => {
@@ -507,7 +579,6 @@
             showScreen('stamp-card-screen');
         });
 
-
         backToModeButton.addEventListener('click', () => { showScreen('mode-selection-screen'); });
 
         questionCountBtns.forEach(btn => {
@@ -523,12 +594,8 @@
                 showMessage('問題数を選んでください。');
                 return;
             }
-
-            previousTotalCorrectCount = getTotalCorrectCount(); // Store count before game starts
-
+            previousTotalCorrectCount = getTotalCorrectCount();
             showScreen('game-screen');
-
-            // Wait for screen to be visible before initializing clock face
             setTimeout(() => {
                 initializeClockFace();
                 currentQuestion = 0;
@@ -549,7 +616,7 @@
             }
         });
 
-        // --- Dragging Logic ---
+        // --- Clock Dragging Logic ---
         function updateClockHandsOnDrag(e) {
             if (!isDragging) return;
             const rect = analogClock.getBoundingClientRect();
