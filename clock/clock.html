@@ -147,6 +147,21 @@
             color: #475569; /* slate-600 */
             user-select: none; /* Prevent text selection */
         }
+        .medal-icon {
+            font-size: 3rem;
+            line-height: 1;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+        }
+        #medal-icon-large {
+            font-size: 6rem;
+        }
+        .medal-celebration {
+            animation: medal-pop 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-360deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-yellow-50 text-gray-800 flex items-center justify-center min-h-screen p-2 sm:p-4">
@@ -236,6 +251,9 @@
         <!-- Stamp Card Screen -->
         <div id="stamp-card-screen" class="container hidden">
             <h1 class="text-4xl sm:text-5xl font-extrabold text-amber-600 mb-4">スタンプカード</h1>
+            <div id="medal-display" class="flex justify-center items-center gap-4 mb-6">
+                <!-- Medals will be added here by JavaScript -->
+            </div>
             <p class="text-xl sm:text-2xl font-bold text-gray-700 mb-6">
                 ぜんぶで <span id="total-correct-count" class="text-3xl text-amber-500">0</span> 問せいかい！
             </p>
@@ -250,6 +268,15 @@
             <div class="modal-content">
                 <p id="modal-message" class="text-2xl font-bold mb-6 text-gray-800"></p>
                 <button id="modal-close" class="btn-3d w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-lg text-lg" style="box-shadow: 0 6px 0 #0891b2;">つぎへ</button>
+            </div>
+        </div>
+
+        <div id="medal-modal" class="modal">
+            <div class="modal-content">
+                <p class="text-3xl font-extrabold text-yellow-500 mb-2">おめでとう🎉🎉🎉</p>
+                <div id="medal-icon-large" class="my-4"></div>
+                <p id="medal-message" class="text-xl font-bold text-gray-700"></p>
+                <button id="medal-modal-close" class="btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 mt-6 rounded-lg text-lg" style="box-shadow: 0 6px 0 #b45309;">やったー！</button>
             </div>
         </div>
     </div>
@@ -284,6 +311,13 @@
         const modalCloseBtn = document.getElementById('modal-close');
         const totalCorrectCountSpan = document.getElementById('total-correct-count');
         const stampGrid = document.getElementById('stamp-grid');
+        const medalDisplay = document.getElementById('medal-display');
+
+        // Medal Modal elements
+        const medalModal = document.getElementById('medal-modal');
+        const medalIconLarge = document.getElementById('medal-icon-large');
+        const medalMessage = document.getElementById('medal-message');
+        const medalModalCloseBtn = document.getElementById('medal-modal-close');
 
 
         // Game State
@@ -296,6 +330,14 @@
         let currentHour = 0;
         let currentMinute = 0;
         let previousTotalCorrectCount = 0; // for animation
+        let isGameActive = false; // To control game flow
+
+        // Medal thresholds
+        const MEDAL_THRESHOLDS = {
+            bronze: 10,
+            silver: 30,
+            gold: 50,
+        };
 
         // localStorage Key
         const STAMP_COUNT_KEY = 'clockGameCorrectCount';
@@ -316,10 +358,40 @@
             stampCardScreen.classList.add('hidden');
             document.getElementById(screenId).classList.remove('hidden');
         }
-
-        function showMessage(message) {
+        function showMessage(message, buttonText = 'つぎへ') {
             modalMessage.textContent = message;
+            modalCloseBtn.textContent = buttonText;
             messageModal.classList.add('active');
+        }
+
+        function showMedalCelebration(medalType) {
+            const medals = {
+                bronze: { icon: '🥉', message: '銅メダル GET！' },
+                silver: { icon: '🥈', message: '銀メダル GET！' },
+                gold: { icon: '🥇', message: '金メダル GET！' }
+            };
+            const medal = medals[medalType];
+            if (!medal) return;
+
+            medalIconLarge.textContent = medal.icon;
+            medalMessage.textContent = medal.message;
+            medalModal.classList.add('active');
+
+            // Reset animation
+            medalIconLarge.classList.remove('medal-celebration');
+            void medalIconLarge.offsetWidth; // Trigger reflow to restart animation
+            medalIconLarge.classList.add('medal-celebration');
+        }
+
+        function resetGame() {
+            isGameActive = false;
+            gameMode = '';
+            questionCount = 0;
+            currentQuestion = 0;
+            correctAnswers = 0;
+            modeBtns.forEach(b => b.classList.remove('selected'));
+            questionCountBtns.forEach(b => b.classList.remove('selected'));
+            showScreen('mode-selection-screen');
         }
 
         // --- Stamp Card Functions ---
@@ -332,43 +404,93 @@
             localStorage.setItem(STAMP_COUNT_KEY, currentCount + 1);
         }
 
-        function updateStampCard() {
+        function updateStampCard(onAnimationComplete) {
             const totalCount = getTotalCorrectCount();
             const maxStamps = 50;
             totalCorrectCountSpan.textContent = totalCount;
             stampGrid.innerHTML = '';
 
+            const medalPositions = {
+                [MEDAL_THRESHOLDS.bronze - 1]: { icon: '🥉', type: 'bronze' },
+                [MEDAL_THRESHOLDS.silver - 1]: { icon: '🥈', type: 'silver' },
+                [MEDAL_THRESHOLDS.gold - 1]: { icon: '🥇', type: 'gold' },
+            };
+
+            // Update medal display above the card
+            medalDisplay.innerHTML = '';
+            const medalData = [
+                { count: MEDAL_THRESHOLDS.bronze, icon: '🥉' },
+                { count: MEDAL_THRESHOLDS.silver, icon: '🥈' },
+                { count: MEDAL_THRESHOLDS.gold, icon: '🥇' }
+            ];
+
+            medalData.forEach(medal => {
+                const medalEl = document.createElement('span');
+                medalEl.className = 'medal-icon';
+                if (totalCount >= medal.count) {
+                    medalEl.textContent = medal.icon;
+                } else {
+                    medalEl.textContent = '❔';
+                    medalEl.style.opacity = '0.3';
+                }
+                medalDisplay.appendChild(medalEl);
+            });
+
+            // Build the initial grid state (before animations)
             for (let i = 0; i < maxStamps; i++) {
                 const stampElement = document.createElement('div');
                 stampElement.className = 'stamp-slot flex items-center justify-center bg-yellow-200/50 rounded';
-                if (i < previousTotalCorrectCount) {
+
+                const isMedalSlot = medalPositions[i];
+
+                if (i < previousTotalCorrectCount) { // Already earned stamps
                     const innerStamp = document.createElement('span');
                     innerStamp.className = 'stamp';
-                    innerStamp.textContent = '💮';
+                    innerStamp.textContent = isMedalSlot ? isMedalSlot.icon : '💮';
                     stampElement.appendChild(innerStamp);
-                } else {
-                    const numberSpan = document.createElement('span');
-                    numberSpan.className = 'text-sm text-amber-500 font-bold';
-                    numberSpan.textContent = i + 1;
-                    stampElement.appendChild(numberSpan);
+                } else { // Not-yet-earned or newly earned slots
+                    if (isMedalSlot) {
+                        const medalPlaceholder = document.createElement('span');
+                        medalPlaceholder.className = 'stamp opacity-40';
+                        medalPlaceholder.textContent = isMedalSlot.icon;
+                        stampElement.appendChild(medalPlaceholder);
+                    } else {
+                        const numberSpan = document.createElement('span');
+                        numberSpan.className = 'text-sm text-amber-500 font-bold';
+                        numberSpan.textContent = i + 1;
+                        stampElement.appendChild(numberSpan);
+                    }
                 }
                 stampGrid.appendChild(stampElement);
             }
 
+            // Animate the newly earned stamps
             const stampSlots = stampGrid.children;
-            let animationDelay = 300; // ms
-            for (let i = previousTotalCorrectCount; i < totalCount && i < maxStamps; i++) {
+            const newStampsCount = totalCount - previousTotalCorrectCount;
+            const animationDelay = 300; // ms
+
+            if (newStampsCount > 0) {
+                for (let i = previousTotalCorrectCount; i < totalCount && i < maxStamps; i++) {
+                    setTimeout(() => {
+                        const slot = stampSlots[i];
+                        if (slot) {
+                            slot.innerHTML = ''; // Clear placeholder/number
+                            const isMedalSlot = medalPositions[i];
+                            const innerStamp = document.createElement('span');
+                            innerStamp.className = 'stamp stamp-pop';
+                            innerStamp.textContent = isMedalSlot ? isMedalSlot.icon : '💮';
+                            slot.appendChild(innerStamp);
+                        }
+                    }, (i - previousTotalCorrectCount) * animationDelay); // Stagger the animation
+                }
+                // Set a timeout for after the last animation completes
                 setTimeout(() => {
-                    const slot = stampSlots[i];
-                    if (slot) {
-                        slot.innerHTML = ''; // Clear the number
-                        const innerStamp = document.createElement('span');
-                        innerStamp.className = 'stamp stamp-pop';
-                        innerStamp.textContent = '💮';
-                        slot.appendChild(innerStamp);
-                    }
-                }, (i - previousTotalCorrectCount + 1) * animationDelay);
+                    if (onAnimationComplete) onAnimationComplete();
+                }, newStampsCount * animationDelay + 100); // Add a small buffer
+            } else {
+                 if (onAnimationComplete) onAnimationComplete();
             }
+
             previousTotalCorrectCount = totalCount;
         }
 
@@ -433,7 +555,7 @@
                 const selectedMinute = minutePickerControl.getValue();
                  // Use `== null` to check for both undefined and null, while allowing 0
                  if (selectedHour == null || selectedMinute == null) {
-                    showMessage('時間と分を両方選んでください。');
+                    showMessage('時間と分を両方選んでください。', 'もどる');
                     return false;
                 }
                 userAnswer = `${String(selectedHour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
@@ -450,8 +572,39 @@
             return true;
         }
 
+        function proceedFromResult() {
+            const startCount = previousTotalCorrectCount;
+            const endCount = getTotalCorrectCount();
+
+            // Show the stamp card first
+            showScreen('stamp-card-screen');
+
+            const checkForMedals = () => {
+                let earnedMedal = null;
+
+                if (startCount < MEDAL_THRESHOLDS.gold && endCount >= MEDAL_THRESHOLDS.gold) {
+                    earnedMedal = 'gold';
+                } else if (startCount < MEDAL_THRESHOLDS.silver && endCount >= MEDAL_THRESHOLDS.silver) {
+                    earnedMedal = 'silver';
+                } else if (startCount < MEDAL_THRESHOLDS.bronze && endCount >= MEDAL_THRESHOLDS.bronze) {
+                    earnedMedal = 'bronze';
+                }
+
+                if (earnedMedal) {
+                    // スタンプアニメーションが終わってから、少し待ってメダル演出を表示
+                    setTimeout(() => {
+                        showMedalCelebration(earnedMedal);
+                    }, 500); // 0.5秒待つ
+                }
+            };
+
+            // Update the card and trigger the medal check after animations
+            updateStampCard(checkForMedals);
+        }
+
         function endGame() {
             stopTimer();
+            isGameActive = false;
             showScreen('result-screen');
             const finalTime = timerDisplay.textContent;
             document.getElementById('total-time').textContent = `かかった時間: ${finalTime}`;
@@ -465,17 +618,12 @@
                 newButton.textContent = 'スタンプカードをみる';
                 newButton.className = 'btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg text-xl';
                 newButton.style.boxShadow = '0 6px 0 #b45309';
-                newButton.addEventListener('click', () => {
-                    updateStampCard();
-                    showScreen('stamp-card-screen');
-                });
+                newButton.addEventListener('click', proceedFromResult);
             } else {
                 newButton.textContent = 'トップにもどる';
                 newButton.className = 'btn-3d w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-lg text-xl';
                 newButton.style.boxShadow = '0 6px 0 #4b5563';
-                newButton.addEventListener('click', () => {
-                    showScreen('mode-selection-screen');
-                });
+                newButton.addEventListener('click', resetGame);
             }
         }
 
@@ -599,22 +747,19 @@
 
         nextToQCountButton.addEventListener('click', () => {
             if (!gameMode) {
-                showMessage('モードを選んでください。');
+                showMessage('モードを選んでください。', 'もどる');
                 return;
             }
             showScreen('question-count-screen');
         });
 
         showStampCardButton.addEventListener('click', () => {
-            updateStampCard();
             showScreen('stamp-card-screen');
+            updateStampCard();
         });
 
-        backToMenuFromStampButton.addEventListener('click', () => {
-            showScreen('mode-selection-screen');
-        });
-
-        backToModeButton.addEventListener('click', () => { showScreen('mode-selection-screen'); });
+        backToMenuFromStampButton.addEventListener('click', resetGame);
+        backToModeButton.addEventListener('click', () => showScreen('mode-selection-screen'));
 
         questionCountBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -626,9 +771,10 @@
 
         startButton.addEventListener('click', () => {
             if (questionCount === 0) {
-                showMessage('問題数を選んでください。');
+                showMessage('問題数を選んでください。', 'もどる');
                 return;
             }
+            isGameActive = true;
             previousTotalCorrectCount = getTotalCorrectCount();
             showScreen('game-screen');
             setTimeout(() => {
@@ -644,11 +790,17 @@
 
         modalCloseBtn.addEventListener('click', () => {
             messageModal.classList.remove('active');
-             if (currentQuestion >= questionCount && currentQuestion > 0) {
-                endGame();
-            } else {
-                nextQuestion();
+            if (isGameActive) {
+                if (currentQuestion >= questionCount && currentQuestion > 0) {
+                    endGame();
+                } else {
+                    nextQuestion();
+                }
             }
+        });
+
+        medalModalCloseBtn.addEventListener('click', () => {
+            medalModal.classList.remove('active');
         });
 
         // --- Clock Dragging Logic ---
@@ -695,4 +847,3 @@
     </script>
 </body>
 </html>
-
