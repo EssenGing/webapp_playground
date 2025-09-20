@@ -229,7 +229,7 @@
                 <p id="correct-count" class="text-xl sm:text-2xl font-bold text-gray-700"></p>
             </div>
             <div class="mt-6">
-                <button id="view-stamps-from-result" class="btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg text-xl" style="box-shadow: 0 6px 0 #b45309;">スタンプカードをみる</button>
+                <button id="result-continue-button" class="btn-3d w-full text-white font-bold py-3 rounded-lg text-xl"></button>
             </div>
         </div>
 
@@ -268,7 +268,6 @@
         const startButton = document.getElementById('start-game');
         const showStampCardButton = document.getElementById('show-stamp-card');
         const backToMenuFromStampButton = document.getElementById('back-to-menu-from-stamp');
-        const viewStampsFromResultButton = document.getElementById('view-stamps-from-result');
 
         const modeBtns = document.querySelectorAll('.mode-btn');
         const questionCountBtns = document.querySelectorAll('.question-count');
@@ -432,7 +431,8 @@
             } else {
                 const selectedHour = hourPickerControl.getValue();
                 const selectedMinute = minutePickerControl.getValue();
-                 if (!selectedHour || !selectedMinute) {
+                 // Use `== null` to check for both undefined and null, while allowing 0
+                 if (selectedHour == null || selectedMinute == null) {
                     showMessage('時間と分を両方選んでください。');
                     return false;
                 }
@@ -456,6 +456,27 @@
             const finalTime = timerDisplay.textContent;
             document.getElementById('total-time').textContent = `かかった時間: ${finalTime}`;
             document.getElementById('correct-count').textContent = `正解数: ${correctAnswers} / ${questionCount} 問`;
+
+            const continueButton = document.getElementById('result-continue-button');
+            const newButton = continueButton.cloneNode(true);
+            continueButton.parentNode.replaceChild(newButton, continueButton);
+
+            if (correctAnswers > 0) {
+                newButton.textContent = 'スタンプカードをみる';
+                newButton.className = 'btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg text-xl';
+                newButton.style.boxShadow = '0 6px 0 #b45309';
+                newButton.addEventListener('click', () => {
+                    updateStampCard();
+                    showScreen('stamp-card-screen');
+                });
+            } else {
+                newButton.textContent = 'トップにもどる';
+                newButton.className = 'btn-3d w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-lg text-xl';
+                newButton.style.boxShadow = '0 6px 0 #4b5563';
+                newButton.addEventListener('click', () => {
+                    showScreen('mode-selection-screen');
+                });
+            }
         }
 
         function initializeClockFace() {
@@ -484,32 +505,38 @@
             const wheelElement = document.getElementById(wheelId);
             const wrapperElement = wheelElement.parentElement;
             const itemHeight = 48;
-            const wrapperHeight = 144;
+            let selectedIndex = 0;
 
-            // Populate wheel
+            // Create a looped list for seamless scrolling effect
+            const buffer = values.length;
+            const displayValues = [...values.slice(-buffer), ...values, ...values.slice(0, buffer)];
+
             wheelElement.innerHTML = '';
-            const paddedValues = ['', ...values, ''];
-            paddedValues.forEach(value => {
+            displayValues.forEach(value => {
                 const item = document.createElement('div');
                 item.className = 'picker-item';
                 item.textContent = String(value).padStart(2, '0');
                 wheelElement.appendChild(item);
             });
 
-            let isDragging = false, startY, startTranslateY, currentTranslateY = 0;
+            let isDragging = false, startY, startTransformY, currentTransformY;
 
-            function setTranslateY(y, transition = true) {
-                currentTranslateY = y;
+            const getCanonicalY = (index) => itemHeight - ((index + buffer) * itemHeight);
+
+            function setTransformY(y, transition = true) {
+                currentTransformY = y;
                 wheelElement.style.transition = transition ? 'transform 0.3s ease-out' : 'none';
                 wheelElement.style.transform = `translateY(${y}px)`;
             }
 
-            setTranslateY(itemHeight); // Initial position
+            // Start at the beginning of the middle section
+            setTransformY(getCanonicalY(0), false);
 
             const onStart = (e) => {
                 isDragging = true;
                 startY = e.touches ? e.touches[0].clientY : e.clientY;
-                startTranslateY = currentTranslateY;
+                startTransformY = currentTransformY;
+                wheelElement.style.transition = 'none';
             };
 
             const onMove = (e) => {
@@ -517,17 +544,28 @@
                 e.preventDefault();
                 const currentY = e.touches ? e.touches[0].clientY : e.clientY;
                 const deltaY = currentY - startY;
-                setTranslateY(startTranslateY + deltaY, false);
+                setTransformY(startTransformY + deltaY, false);
             };
 
             const onEnd = () => {
                 if (!isDragging) return;
                 isDragging = false;
 
-                let selectedIndex = Math.round(currentTranslateY / itemHeight);
-                selectedIndex = Math.min(1, Math.max(-(values.length), selectedIndex));
+                const rawIndex = (itemHeight - currentTransformY) / itemHeight;
+                let targetDisplayIndex = Math.round(rawIndex);
 
-                setTranslateY(selectedIndex * itemHeight);
+                selectedIndex = (targetDisplayIndex % values.length + values.length) % values.length;
+
+                const targetY = itemHeight - (targetDisplayIndex * itemHeight);
+                setTransformY(targetY);
+
+                // After snapping animation, silently jump to the canonical position
+                // to allow for infinite scrolling.
+                const handleTransitionEnd = () => {
+                    wheelElement.removeEventListener('transitionend', handleTransitionEnd);
+                    setTransformY(getCanonicalY(selectedIndex), false);
+                };
+                wheelElement.addEventListener('transitionend', handleTransitionEnd);
             };
 
             ['mousedown', 'touchstart'].forEach(evt => wrapperElement.addEventListener(evt, onStart));
@@ -536,10 +574,12 @@
 
             return {
                 getValue: () => {
-                    let selectedIndex = Math.abs(Math.round(currentTranslateY / itemHeight) - 1);
                     return values[selectedIndex];
                 },
-                reset: () => setTranslateY(itemHeight)
+                reset: () => {
+                    selectedIndex = 0;
+                    setTransformY(getCanonicalY(0), false);
+                }
             };
         }
 
@@ -572,11 +612,6 @@
 
         backToMenuFromStampButton.addEventListener('click', () => {
             showScreen('mode-selection-screen');
-        });
-
-        viewStampsFromResultButton.addEventListener('click', () => {
-            updateStampCard();
-            showScreen('stamp-card-screen');
         });
 
         backToModeButton.addEventListener('click', () => { showScreen('mode-selection-screen'); });
