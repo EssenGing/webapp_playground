@@ -109,6 +109,23 @@
             position: absolute; font-weight: bold; color: #475569; /* slate-600 */
             transform: translate(-50%, -50%); font-size: 1.25rem;
         }
+        .stamp {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        .stamp-slot {
+            width: 44px;
+            height: 44px;
+            border: 2px dashed #fbbf24; /* amber-400 */
+        }
+        .stamp-pop {
+            animation: pop 1.2s ease-out;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-yellow-50 text-gray-800 flex items-center justify-center min-h-screen p-2 sm:p-4">
@@ -129,7 +146,8 @@
                     <button id="mode-digital-set" class="btn btn-3d mode-btn bg-gray-200 text-lg sm:text-xl font-bold py-3 px-4 sm:px-6 rounded-lg" data-mode="digital-set" style="box-shadow: 0 6px 0 #9ca3af;">針をうごかす</button>
                 </div>
             </div>
-            <button id="next-to-q-count" class="btn-3d w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl" style="box-shadow: 0 6px 0 #0891b2;">次へ</button>
+            <button id="next-to-q-count" class="btn-3d w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 sm:py-4 rounded-lg text-2xl mb-3" style="box-shadow: 0 6px 0 #0891b2;">次へ</button>
+            <button id="show-stamp-card" class="btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg text-xl" style="box-shadow: 0 6px 0 #b45309;">スタンプカード</button>
         </div>
 
         <div id="question-count-screen" class="container hidden">
@@ -181,11 +199,23 @@
                 <p id="total-time" class="text-xl sm:text-2xl font-bold text-gray-700"></p>
                 <p id="correct-count" class="text-xl sm:text-2xl font-bold text-gray-700"></p>
             </div>
-            <div class="flex gap-4 justify-center mt-6">
-                <button id="restart-game" class="btn-3d w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-lg text-xl" style="box-shadow: 0 6px 0 #0891b2;">もう一度</button>
-                <button id="back-to-menu" class="btn-3d w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-lg text-xl" style="box-shadow: 0 6px 0 #4b5563;">メニューに戻る</button>
+            <div class="mt-6">
+                <button id="view-stamps-from-result" class="btn-3d w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg text-xl" style="box-shadow: 0 6px 0 #b45309;">スタンプカードをみる</button>
             </div>
         </div>
+
+        <!-- Stamp Card Screen -->
+        <div id="stamp-card-screen" class="container hidden">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-amber-600 mb-4">スタンプカード</h1>
+            <p class="text-xl sm:text-2xl font-bold text-gray-700 mb-6">
+                ぜんぶで <span id="total-correct-count" class="text-3xl text-amber-500">0</span> 問せいかい！
+            </p>
+            <div id="stamp-grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 p-4 bg-yellow-100 rounded-lg max-h-80 overflow-y-auto">
+                <!-- Stamps will be added here by JavaScript -->
+            </div>
+             <button id="back-to-menu-from-stamp" class="btn-3d w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 mt-6 rounded-lg text-xl" style="box-shadow: 0 6px 0 #4b5563;">もどる</button>
+        </div>
+
 
         <div id="message-modal" class="modal">
             <div class="modal-content">
@@ -201,12 +231,16 @@
         const questionCountScreen = document.getElementById('question-count-screen');
         const gameScreen = document.getElementById('game-screen');
         const resultScreen = document.getElementById('result-screen');
+        const stampCardScreen = document.getElementById('stamp-card-screen');
+
 
         const nextToQCountButton = document.getElementById('next-to-q-count');
         const backToModeButton = document.getElementById('back-to-mode');
         const startButton = document.getElementById('start-game');
-        const restartButton = document.getElementById('restart-game');
-        const backToMenuButton = document.getElementById('back-to-menu');
+        const showStampCardButton = document.getElementById('show-stamp-card');
+        const backToMenuFromStampButton = document.getElementById('back-to-menu-from-stamp');
+        const viewStampsFromResultButton = document.getElementById('view-stamps-from-result');
+
 
         const modeBtns = document.querySelectorAll('.mode-btn');
         const questionCountBtns = document.querySelectorAll('.question-count');
@@ -224,6 +258,9 @@
         const messageModal = document.getElementById('message-modal');
         const modalMessage = document.getElementById('modal-message');
         const modalCloseBtn = document.getElementById('modal-close');
+        const totalCorrectCountSpan = document.getElementById('total-correct-count');
+        const stampGrid = document.getElementById('stamp-grid');
+
 
         // Game State
         let gameMode = '';
@@ -234,6 +271,14 @@
         let correctAnswers = 0;
         let currentHour = 0;
         let currentMinute = 0;
+        let previousTotalCorrectCount = 0; // for animation
+
+        // localStorage Key
+        const STAMP_COUNT_KEY = 'clockGameCorrectCount';
+
+        // Initialize previous count on script load
+        previousTotalCorrectCount = getTotalCorrectCount();
+
 
         // Dragging State
         let isDragging = false;
@@ -246,6 +291,7 @@
             questionCountScreen.classList.add('hidden');
             gameScreen.classList.add('hidden');
             resultScreen.classList.add('hidden');
+            stampCardScreen.classList.add('hidden');
             document.getElementById(screenId).classList.remove('hidden');
         }
 
@@ -253,6 +299,64 @@
             modalMessage.textContent = message;
             messageModal.classList.add('active');
         }
+
+        // --- Stamp Card Functions ---
+        function getTotalCorrectCount() {
+            return parseInt(localStorage.getItem(STAMP_COUNT_KEY) || '0', 10);
+        }
+
+        function addCorrectCount() {
+            const currentCount = getTotalCorrectCount();
+            localStorage.setItem(STAMP_COUNT_KEY, currentCount + 1);
+        }
+
+        function updateStampCard() {
+            const totalCount = getTotalCorrectCount();
+            const maxStamps = 50;
+            totalCorrectCountSpan.textContent = totalCount;
+            stampGrid.innerHTML = ''; // Clear existing stamps
+
+            // Create all slots and fill them based on their status
+            for (let i = 0; i < maxStamps; i++) {
+                const stampElement = document.createElement('div');
+                stampElement.className = 'stamp-slot flex items-center justify-center bg-yellow-200/50 rounded';
+
+                if (i < previousTotalCorrectCount) {
+                    // Instantly show stamps earned before this session
+                    const innerStamp = document.createElement('span');
+                    innerStamp.className = 'stamp';
+                    innerStamp.textContent = '💮';
+                    stampElement.appendChild(innerStamp);
+                } else {
+                    // Show numbers for new or future slots
+                    const numberSpan = document.createElement('span');
+                    numberSpan.className = 'text-sm text-amber-500 font-bold';
+                    numberSpan.textContent = i + 1;
+                    stampElement.appendChild(numberSpan);
+                }
+                stampGrid.appendChild(stampElement);
+            }
+
+            // Animate the new stamps
+            const stampSlots = stampGrid.children;
+            let animationDelay = 300; // ms
+            for (let i = previousTotalCorrectCount; i < totalCount && i < maxStamps; i++) {
+                setTimeout(() => {
+                    const slot = stampSlots[i];
+                    if (slot) {
+                        slot.innerHTML = ''; // Clear the number
+                        const innerStamp = document.createElement('span');
+                        innerStamp.className = 'stamp stamp-pop';
+                        innerStamp.textContent = '💮';
+                        slot.appendChild(innerStamp);
+                    }
+                }, (i - previousTotalCorrectCount + 1) * animationDelay);
+            }
+
+            // Update the previous count so it doesn't re-animate next time without playing
+            previousTotalCorrectCount = totalCount;
+        }
+
 
         function generateTime() {
             currentHour = Math.floor(Math.random() * 12) + 1;
@@ -323,6 +427,7 @@
             const correctTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
             if (userAnswer === correctTime) {
                 correctAnswers++;
+                addCorrectCount(); // Add to total correct count
                 showMessage('正解！');
             } else {
                 showMessage(`ざんねん！正解は ${correctTime}`);
@@ -388,6 +493,21 @@
             showScreen('question-count-screen');
         });
 
+        showStampCardButton.addEventListener('click', () => {
+            updateStampCard();
+            showScreen('stamp-card-screen');
+        });
+
+        backToMenuFromStampButton.addEventListener('click', () => {
+            showScreen('mode-selection-screen');
+        });
+
+        viewStampsFromResultButton.addEventListener('click', () => {
+            updateStampCard();
+            showScreen('stamp-card-screen');
+        });
+
+
         backToModeButton.addEventListener('click', () => { showScreen('mode-selection-screen'); });
 
         questionCountBtns.forEach(btn => {
@@ -403,6 +523,9 @@
                 showMessage('問題数を選んでください。');
                 return;
             }
+
+            previousTotalCorrectCount = getTotalCorrectCount(); // Store count before game starts
+
             showScreen('game-screen');
 
             // Wait for screen to be visible before initializing clock face
@@ -414,16 +537,6 @@
                 nextQuestion();
             }, 0);
         });
-
-        restartButton.addEventListener('click', () => {
-            showScreen('game-screen');
-            currentQuestion = 0;
-            correctAnswers = 0;
-            startTimer();
-            nextQuestion();
-        });
-
-        backToMenuButton.addEventListener('click', resetGame);
 
         submitButton.addEventListener('click', () => { checkAnswer(); });
 
